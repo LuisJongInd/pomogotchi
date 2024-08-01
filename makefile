@@ -127,27 +127,27 @@ GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "c
 all: $(TARGET)
 
 $(TARGET): $(DRIVERS_OBJS) $(BSP_OBJS) $(UTIL_OBJS) $(USR_OBJS)
-	mkdir -p $(MAP_DIR) $(DEBUG_DIR)
-	mkdir -p $(dir $@)
-	@$(CC) $(LDFLAGS) -o $@ $^
+	@mkdir -p $(MAP_DIR) $(DEBUG_DIR)
+	@mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
 
 
 $(OBJ_DIR)/drivers/%.o: $(DRIVERS_DIR)/Src/%.c
-	mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(OBJ_DIR)/bsp/%.o: $(BSP_DIR)/Src/%.c
-	mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
 
 $(OBJ_DIR)/util/%.o: $(UTIL_DIR)/%.c
-	mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
 
 
 $(OBJ_DIR)/usr/%.o: $(USR_DIR)/Src/%.c
-	mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $^
 
 # load the executable into the board using openOCD
 load: $(TARGET)
