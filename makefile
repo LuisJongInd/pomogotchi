@@ -117,12 +117,31 @@ GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "c
 #######################################################################################################################################################
 #                                                                                                                                                     #
 #                                                                                                                                                     #
+#                                                                      # cppcheck #                                                                   #  
+#                                                                                                                                                     #
+#                                                                                                                                                     #
+#######################################################################################################################################################
+
+SA = cppcheck
+SA_SOURCES = $(DRIVERS_SOURCES) $(BSP_SOURCES) $(USR_SOURCES)
+SA_INC = -I $(BSP_DIR)/Inc \
+				 -I $(USR_DIR)/Inc \
+				 -I $(DRIVERS_DIR)/Inc 
+
+#enabling all errors but missing include files
+SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=missingInclude:*.h  $(SA_INC) $(SA_SOURCES)
+
+
+#######################################################################################################################################################
+#                                                                                                                                                     #
+#                                                                                                                                                     #
 #                                                                      # Build and phony targets #                                                    #  
 #                                                                                                                                                     #
 #                                                                                                                                                     #
 #######################################################################################################################################################
 
-.PHONY: all clean load debug gdb_debug gdb_log
+.PHONY: all clean load debug gdb_debug gdb_log static_analysis
+ 
 
 all: $(TARGET)
 
@@ -164,6 +183,12 @@ gdb_debug:
 # launch the defined gdb script and copy the content in the log file
 gdb_log:
 	> $(GDB_LOG) && $(GDB) $(GDB_SCRIPT)
+
+# static analysis command
+
+static_analysis:
+	@$(SA) $(SA_FLAGS)
+
 
 # clean the project
 clean:
