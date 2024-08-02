@@ -1,0 +1,11 @@
+on: [push]
+jobs:
+  build_and_static_analysis:
+    runs-on: ubuntu-latest
+    container:
+      image luisjongind/arm_none_eabi_ubuntu2204:latest
+    steps:
+    - name: Checkout the repository
+      user: actions/checkout@v3
+    - run: make all
+    - run: make static_analysis
