@@ -10,23 +10,23 @@
 ROOT_DIR = ${HOME}
 
 # project directory (GitHub repository)
-PROJECT_DIR = $(ROOT_DIR)/pomogotchi/code
+PROJECT_DIR = pomogotchi/code
 
 # build dir
-BUILD_DIR = $(PROJECT_DIR)/build
+BUILD_DIR = build
 
 # CMSIS header Files (Cortex cmx header files and stm32f429 header files)
 CMSIS_CORE = $(ROOT_DIR)/cmsis_header_files/CMSIS_6/CMSIS/Core# core_cm4.h
 CMSIS_DEVICE = $(ROOT_DIR)/cmsis_header_files/cmsis_device_f4# stm32f429xx.h
 
 # Project directories
-OBJ_DIR = $(BUILD_DIR)/obj
-UTIL_DIR = $(PROJECT_DIR)/util# openocd config file, linker script, syscalls, startup file, debug script
-BSP_DIR = $(PROJECT_DIR)/bsp# bsp files (e-ink display)
-USR_DIR = $(PROJECT_DIR)/user
-DRIVERS_DIR = $(PROJECT_DIR)/drivers
+UTIL_DIR = util# openocd config file, linker script, syscalls, startup file, debug script
+BSP_DIR = bsp# bsp files (e-ink display)
+USR_DIR = user
+DRIVERS_DIR = drivers
 
-# build directories
+# build sub-directories
+OBJ_DIR = $(BUILD_DIR)/obj
 BIN_DIR = $(BUILD_DIR)/bin# to store the .elf file
 DEBUG_DIR = $(BUILD_DIR)/debug#to store some files
 MAP_DIR = $(BUILD_DIR)/map
