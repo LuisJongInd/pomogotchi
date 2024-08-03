@@ -36,8 +36,7 @@ MAP_DIR = $(BUILD_DIR)/map
 #######################################################################################################################################################
 #                                                                                                                                                     #
 #                                                                                                                                                     #
-#                                                                      # Files #                                                                      #  
-#                                                                                                                                                     #
+#                                                                      # Files #                                                                      #  #
 #                                                                                                                                                     #
 #######################################################################################################################################################
 
@@ -46,6 +45,8 @@ DRIVERS_SOURCES = $(wildcard $(DRIVERS_DIR)/Src/*.c)
 BSP_SOURCES = $(wildcard $(BSP_DIR)/Src/*.c)
 USR_SOURCES = $(wildcard $(USR_DIR)/Src/*.c)
 UTIL_SOURCES = $(wildcard $(UTIL_DIR)/*.c)
+PROJECT_SOURCES = $(DRIVERS_SOURCES) $(BSP_SOURCES) $(USR_SOURCES)
+
 
 # channge .c extension for .o for object names
 DRIVERS_NAMES = $(DRIVERS_SOURCES:.c=.o)
@@ -123,7 +124,7 @@ GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "c
 #######################################################################################################################################################
 
 SA = cppcheck
-SA_SOURCES = $(DRIVERS_SOURCES) $(BSP_SOURCES) $(USR_SOURCES)
+SA_SOURCES = $(PROJECT_SOURCES)
 SA_INC = -I $(BSP_DIR)/Inc \
 				 -I $(USR_DIR)/Inc \
 				 -I $(DRIVERS_DIR)/Inc 
@@ -140,7 +141,7 @@ SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=mi
 #                                                                                                                                                     #
 #######################################################################################################################################################
 
-.PHONY: all clean load debug gdb_debug gdb_log static_analysis
+.PHONY: all clean load debug gdb_debug gdb_log static_analysis format
  
 
 all: $(TARGET)
@@ -189,15 +190,11 @@ gdb_log:
 static_analysis:
 	@$(SA) $(SA_FLAGS)
 
+format:
+	@clang-format-15 -i $(PROJECT_SOURCES)
+
 
 # clean the project
 clean:
 	rm -rf $(OBJ_DIR)
 
-#######################################################################################################################################################
-#                                                                                                                                                     #
-#                                                                                                                                                     #
-#                                                                      # Files #                                                                      #  
-#                                                                                                                                                     #
-#                                                                                                                                                     #
-#######################################################################################################################################################
