@@ -7,7 +7,7 @@
 #######################################################################################################################################################
 
 # root directory of all files
-ROOT_DIR = ${HOME}
+ROOT_DIR = ${ENV_HOME_DIR}
 
 # project directory (GitHub repository)
 PROJECT_DIR = pomogotchi/code

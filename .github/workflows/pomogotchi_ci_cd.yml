@@ -7,5 +7,6 @@ jobs:
     steps:
     - name: Checkout the repository
       uses: actions/checkout@v3
+    - run: echo "ENV_HOME_DIR=/home/ubuntu" >> $GITHUB_ENV
     - run: make all
     - run: make static_analysis
