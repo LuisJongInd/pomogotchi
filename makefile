@@ -112,8 +112,9 @@ OPEN_OCD_FLAGS = -f $(UTIL_DIR)/openocd.cfg
 #######################################################################################################################################################
 
 GDB = gdb-multiarch
-GDB_SCRIPT = --command=$(UTIL_DIR)/debug.gdb
-GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "continue"
+GDB_SCRIPT = --command=$(UTIL_DIR)/debug-gdb.py $(TARGET)
+GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "continue" $(TARGET)
+
 
 #######################################################################################################################################################
 #                                                                                                                                                     #
@@ -183,7 +184,7 @@ gdb_debug:
 
 # launch the defined gdb script and copy the content in the log file
 gdb_log:
-	> $(GDB_LOG) && $(GDB) $(GDB_SCRIPT)
+	@> $(GDB_LOG) && $(GDB) $(GDB_SCRIPT)
 
 # static analysis command
 
@@ -196,5 +197,5 @@ format:
 
 # clean the project
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR) $(TARGET)
 
