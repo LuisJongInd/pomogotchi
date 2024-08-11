@@ -14,6 +14,7 @@
 
 typedef enum{ERROR, OK}DriverStatus;
 typedef enum {DISABLE, ENABLE} EnableDisable;
+typedef enum {LOW, HIGH} PinLogicalLevel;
 
 
 
