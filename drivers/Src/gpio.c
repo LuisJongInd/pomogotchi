@@ -2,6 +2,7 @@
 
 static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
                                         EnableDisable EnorDi);
+static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx);
 
 DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     // Enable clock in order to configure registers
@@ -29,7 +30,55 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
                                       << (2 * pGPIOConfig->PinConfig.Number);
 
     } else {
-        // TODO (Interrupt Mode)
+
+        /* Configuring EXTI Falling/Rising modes */
+
+        // EXTI provides two registers to enable the edge to be
+        // detected in the GPIO pin. EXTI_RTSR sets Rising edge
+        // and EXTI_FTSR sets the Falling edge
+
+        if (pGPIOConfig->InterruptMode == GPIO_IT_FALL) {
+            EXTI->FTSR |= (1 << pGPIOConfig->PinConfig.Number);
+            EXTI->RTSR &= ~(1 << pGPIOConfig->PinConfig.Number);
+        } else if (pGPIOConfig->InterruptMode == GPIO_IT_RISE) {
+
+            EXTI->FTSR &= ~(1 << pGPIOConfig->PinConfig.Number);
+            EXTI->RTSR |= (1 << pGPIOConfig->PinConfig.Number);
+        } else if (pGPIOConfig->InterruptMode == GPIO_IT_RISEFALL) {
+
+            EXTI->FTSR |= (1 << pGPIOConfig->PinConfig.Number);
+            EXTI->RTSR |= (1 << pGPIOConfig->PinConfig.Number);
+        }
+
+        /* Configuring EXTI Interruption Mode */
+
+        // EXTI lines can be configured as Interruptions or events. To
+        // set them as interruptions, EXTI_IMR is used. This sets which
+        // EXTIx will be enabled
+
+        EXTI->IMR |= (1 << pGPIOConfig->PinConfig.Number);
+
+        /* Configuring System Configuration Controller */
+
+        // SYSCFG_EXTICRx are x(1..4) registers used to configure the
+        // input of the EXTIy lines y(0..3). To select the desired input:
+        //    0000: PAy pin
+        //    0001: PBy pin
+        //    0010: PBy pin
+        //    0011: PBy pin
+        //    0100: PBy pin
+        //    0101: PBy pin
+        //    0110: PBy pin
+        //    0111: PBy pin
+        //    1000: PBy pin
+        uint8_t x = pGPIOConfig->PinConfig.Number / 4;
+        uint8_t y = pGPIOConfig->PinConfig.Number % 4;
+
+        SYSCFG->EXTICR[x] =
+            (GPIO_get_GPIOx_number(pGPIOConfig->pGPIOx) << (y * 4));
+
+        // Interrupts are only used in input mode
+        return OK;
     }
 
     /* Output Type  */
@@ -90,44 +139,98 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     return OK;
 }
 
-// TODO
+uint8_t GPIO_Pin_Read(GPIO_TypeDef *pGPIOx, uint8_t PinNumber) {
+
+    /* Reading form single pin in Input Data Registers */
+    // IDRy is a read only register which reads the input of the y(0..15) pin
+    // of the GPIOx port.
+
+    uint8_t returnValue = ((pGPIOx->IDR >> PinNumber) & 0x1);
+    return returnValue;
+}
+
+void GPIO_Pin_Write(GPIO_TypeDef *pGPIOx, uint8_t PinNumber,
+                    PinLogicalLevel LorH) {
+    /* Writing to single pin in Output Data Register */
+    // ODRy writes to the y(0..15) pin.
+    if (LorH == HIGH) {
+        pGPIOx->ODR |= (uint16_t)(0x1 << PinNumber);
+    } else {
+        pGPIOx->ODR &= (uint16_t) ~(0x1 << PinNumber);
+    }
+}
+
+void GPIO_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
+
+    /* Enabling/Disabling GPIO interruptions*/
+
+    // To enable interruptions we use NVIC_ISERx register. This
+    // is a set of 8 registers that configure up to 91 interruptions
+
+    // CMSIS provides functions for enabling/disabling interruptions
+    if (EnOrDi == ENABLE) {
+        // param of this function is a IRQn_Type which is an enum defined
+        // in stm32f429xx header file
+        __NVIC_EnableIRQ(IRQNumber);
+    } else {
+        __NVIC_DisableIRQ(IRQNumber);
+    }
+}
+
+void GPIO_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
+
+    /* Configuring GPIO interruptions priority */
+
+    // To configure the priority, the NVIC_IPRx registers are used. Those are
+    // 60 registers used to configure the prioritie values of each interruptions
+    // available
+
+    // Using CMSIS defined function
+    __NVIC_SetPriority(IRQNumber, IRQPriority);
+}
+
 static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
                                         EnableDisable EnorDi) {
+
+    RCC->AHB1ENR |= (1 << GPIO_get_GPIOx_number(GPIOx));
+}
+
+static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx) {
+    uint8_t number = 0;
     switch ((unsigned long int)GPIOx) {
     case GPIOA_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN_Msk;
+        number = 0;
         break;
     case GPIOB_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN_Msk;
+        number = 1;
         break;
     case GPIOC_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN_Msk;
+        number = 2;
         break;
     case GPIOD_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN_Msk;
+        number = 3;
         break;
     case GPIOE_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN_Msk;
+        number = 4;
         break;
     case GPIOF_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN_Msk;
+        number = 5;
         break;
     case GPIOG_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN_Msk;
+        number = 6;
         break;
     case GPIOH_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN_Msk;
+        number = 7;
         break;
     case GPIOI_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN_Msk;
+        number = 8;
         break;
     case GPIOJ_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN_Msk;
+        number = 9;
         break;
     case GPIOK_BASE:
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOKEN_Msk;
-        break;
-    default:
+        number = 10;
         break;
     }
+    return number;
 }
