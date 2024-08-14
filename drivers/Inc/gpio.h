@@ -33,7 +33,10 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pgpioconfig);
 
 uint8_t GPIO_Pin_Read(GPIO_TypeDef *pGPIOx, uint8_t PinNumber);
 void GPIO_Pin_Write(GPIO_TypeDef *pGPIOx, uint8_t PinNumber, PinLogicalLevel LorH);
+void GPIO_Pin_Toggle(GPIO_TypeDef *pGPIOx, uint8_t PinNumber);
 
+void GPIO_IRQ_Handling(uint8_t PinNumber);
+void GPIO_Callback_IRQTrigger(uint8_t PinNumber);
 
 void GPIO_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi);
 void GPIO_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority);

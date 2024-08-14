@@ -10,7 +10,8 @@
 #define HSI_VALUE 16000000
 
 // Shortcut definitions
-#define __vo32 volatile
+#define __vo volatile
+#define __weak __attribute__((weak))
 
 typedef enum{ERROR, OK}DriverStatus;
 typedef enum {DISABLE, ENABLE} EnableDisable;

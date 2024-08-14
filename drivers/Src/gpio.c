@@ -64,21 +64,20 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
         // input of the EXTIy lines y(0..3). To select the desired input:
         //    0000: PAy pin
         //    0001: PBy pin
-        //    0010: PBy pin
-        //    0011: PBy pin
-        //    0100: PBy pin
-        //    0101: PBy pin
-        //    0110: PBy pin
-        //    0111: PBy pin
-        //    1000: PBy pin
+        //    0010: PCy pin
+        //    0011: PDy pin
+        //    0100: PEy pin
+        //    0101: PFy pin
+        //    0110: PGy pin
+        //    0111: PHy pin
+        //    1000: PIy pin
         uint8_t x = pGPIOConfig->PinConfig.Number / 4;
         uint8_t y = pGPIOConfig->PinConfig.Number % 4;
+        uint8_t n = GPIO_get_GPIOx_number(pGPIOConfig->pGPIOx);
 
-        SYSCFG->EXTICR[x] =
-            (GPIO_get_GPIOx_number(pGPIOConfig->pGPIOx) << (y * 4));
+        RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
-        // Interrupts are only used in input mode
-        return OK;
+        SYSCFG->EXTICR[x] |= (n << (y * 4));
     }
 
     /* Output Type  */
@@ -160,6 +159,10 @@ void GPIO_Pin_Write(GPIO_TypeDef *pGPIOx, uint8_t PinNumber,
     }
 }
 
+void GPIO_Pin_Toggle(GPIO_TypeDef *pGPIOx, uint8_t PinNumber) {
+    pGPIOx->ODR ^= (uint16_t)(0x1 << PinNumber);
+}
+
 void GPIO_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
 
     /* Enabling/Disabling GPIO interruptions*/
@@ -187,6 +190,20 @@ void GPIO_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
 
     // Using CMSIS defined function
     __NVIC_SetPriority(IRQNumber, IRQPriority);
+}
+
+void GPIO_IRQ_Handling(uint8_t PinNumber) {
+    /* Handling GPIO IRQ interruptions */
+
+    // Whenever an interruption arises, the EXTI_PRx register sets a bit to
+    // indicate there is a pending request on the EXTIx line. In order to clean
+    // this (and avoid the NVIC continously triggering the EXTIx line), a '1'
+    // must be written
+
+    if (EXTI->PR & (1 << PinNumber)) {
+        EXTI->PR |= (1 << PinNumber);
+        GPIO_Callback_IRQTrigger(PinNumber);
+    }
 }
 
 static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
@@ -233,4 +250,10 @@ static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx) {
         break;
     }
     return number;
+}
+
+__weak void GPIO_Callback_IRQTrigger(uint8_t PinNumber) {
+    // should be implemented in user level code
+    // cast to void to avoid unused variable
+    (void)PinNumber;
 }
