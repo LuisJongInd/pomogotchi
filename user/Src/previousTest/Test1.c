@@ -1,17 +1,16 @@
 #include "main.h"
 
 void GPIO_initialization(void);
-void SPI_initialization(void);
 
 /*
- * This test will only initialaze SPI1 and SPI3 porst.
+ *  This example will turn on a LED whenever the button is pressed. The button
+ * will be configured in Interruption mode, so toggling the LED will be done
+ * inside the callback function
  */
 
 int main(void) {
 
     GPIO_initialization();
-    SPI_initialization();
-    Test();
 
     while (1) {
         ;
@@ -49,32 +48,10 @@ void GPIO_initialization(void) {
     GPIO_Pin_Write(GPIOB, 7, LOW);
 }
 
-void SPI_initialization(void) {
-  
-    SPI_DriverTypeDef spi1 = {0};
-
-    spi1.pSPIx = SPI1;
-    spi1.Config.Type = SPI_Type_FullDuplex;
-    spi1.Config.Mode = SPI_Mode_1;
-    spi1.Config.Hierarchy = SPI_Hierarchy_Master;
-    spi1.Config.BaudRate = SPI_BaudRate_div8;
-    spi1.Config.FrameFormat = SPI_FrameFormat_LSBFirst;
-    spi1.Config.SSM = SPI_SSM_Disable;
-    spi1.Config.DataFormat = SPI_DataFormat_16bit;
-
-    SPI_Init(&spi1);
-
-    SPI_DriverTypeDef spi3 = {0};
-     spi3.pSPIx = SPI3;
-    spi3.Config.Type = SPI_Type_HalfDuplex;
-    spi3.Config.Mode = SPI_Mode_3;
-    spi3.Config.Hierarchy = SPI_Hierarchy_Slave;
-    spi3.Config.BaudRate = SPI_BaudRate_div8;
-    spi3.Config.FrameFormat = SPI_FrameFormat_MSBFirst;
-    spi3.Config.SSM = SPI_SSM_Enable;
-    spi3.Config.DataFormat = SPI_DataFormat_16bit;
-
-    SPI_Init(&spi3); 
+void GPIO_Callback_IRQTrigger(uint8_t PinNumber) {
+    if (PinNumber == 13) {
+        GPIO_Pin_Toggle(GPIOB, 7);
+    }
 }
 
 void Test(void) {

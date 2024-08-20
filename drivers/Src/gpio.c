@@ -4,14 +4,14 @@ static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
                                         EnableDisable EnorDi);
 static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx);
 
-DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
+DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
     // Enable clock in order to configure registers
 
-    GPIO_PeripheralClockControl(pGPIOConfig->pGPIOx, ENABLE);
+    GPIO_PeripheralClockControl(pGPIODriver->pGPIOx, ENABLE);
 
-    /* Check for incorrect configuration values */
-    if ((pGPIOConfig->PinConfig.Number > 15) ||
-        (pGPIOConfig->PinConfig.AlternateFunction > 15))
+  /* Check for incorrect configuration values */
+    if ((pGPIODriver->Config.Number > 15) ||
+        (pGPIODriver->Config.AlternateFunction > 15))
         return ERROR;
 
     /* Pin mode configuration */
@@ -22,12 +22,12 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     //    01: Alternate Function
     //    11: Analog mode
 
-    if (pGPIOConfig->InterruptMode == GPIO_IT_DISABLE) {
+    if (pGPIODriver->InterruptMode == GPIO_It_Disable) {
 
-        pGPIOConfig->pGPIOx->MODER &=
-            ~(0x3 << (2 * pGPIOConfig->PinConfig.Number));
-        pGPIOConfig->pGPIOx->MODER |= (0x3 & pGPIOConfig->PinConfig.Mode)
-                                      << (2 * pGPIOConfig->PinConfig.Number);
+        pGPIODriver->pGPIOx->MODER &=
+            ~(0x3 << (2 * pGPIODriver->Config.Number));
+        pGPIODriver->pGPIOx->MODER |= (0x3 & pGPIODriver->Config.Mode)
+                                      << (2 * pGPIODriver->Config.Number);
 
     } else {
 
@@ -37,17 +37,17 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
         // detected in the GPIO pin. EXTI_RTSR sets Rising edge
         // and EXTI_FTSR sets the Falling edge
 
-        if (pGPIOConfig->InterruptMode == GPIO_IT_FALL) {
-            EXTI->FTSR |= (1 << pGPIOConfig->PinConfig.Number);
-            EXTI->RTSR &= ~(1 << pGPIOConfig->PinConfig.Number);
-        } else if (pGPIOConfig->InterruptMode == GPIO_IT_RISE) {
+        if (pGPIODriver->InterruptMode == GPIO_It_Fall) {
+            EXTI->FTSR |= (1 << pGPIODriver->Config.Number);
+            EXTI->RTSR &= ~(1 << pGPIODriver->Config.Number);
+        } else if (pGPIODriver->InterruptMode == GPIO_It_Rise) {
 
-            EXTI->FTSR &= ~(1 << pGPIOConfig->PinConfig.Number);
-            EXTI->RTSR |= (1 << pGPIOConfig->PinConfig.Number);
-        } else if (pGPIOConfig->InterruptMode == GPIO_IT_RISEFALL) {
+            EXTI->FTSR &= ~(1 << pGPIODriver->Config.Number);
+            EXTI->RTSR |= (1 << pGPIODriver->Config.Number);
+        } else if (pGPIODriver->InterruptMode == GPIO_It_RiseFall) {
 
-            EXTI->FTSR |= (1 << pGPIOConfig->PinConfig.Number);
-            EXTI->RTSR |= (1 << pGPIOConfig->PinConfig.Number);
+            EXTI->FTSR |= (1 << pGPIODriver->Config.Number);
+            EXTI->RTSR |= (1 << pGPIODriver->Config.Number);
         }
 
         /* Configuring EXTI Interruption Mode */
@@ -56,7 +56,7 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
         // set them as interruptions, EXTI_IMR is used. This sets which
         // EXTIx will be enabled
 
-        EXTI->IMR |= (1 << pGPIOConfig->PinConfig.Number);
+        EXTI->IMR |= (1 << pGPIODriver->Config.Number);
 
         /* Configuring System Configuration Controller */
 
@@ -71,9 +71,9 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
         //    0110: PGy pin
         //    0111: PHy pin
         //    1000: PIy pin
-        uint8_t x = pGPIOConfig->PinConfig.Number / 4;
-        uint8_t y = pGPIOConfig->PinConfig.Number % 4;
-        uint8_t n = GPIO_get_GPIOx_number(pGPIOConfig->pGPIOx);
+        uint8_t x = pGPIODriver->Config.Number / 4;
+        uint8_t y = pGPIODriver->Config.Number % 4;
+        uint8_t n = GPIO_get_GPIOx_number(pGPIODriver->pGPIOx);
 
         RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
@@ -86,9 +86,9 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     //    0: Ouptut Push-pull
     //    1: Output open-drain
 
-    pGPIOConfig->pGPIOx->OTYPER &= ~(0x1 << (pGPIOConfig->PinConfig.Number));
-    pGPIOConfig->pGPIOx->OTYPER |=
-        (pGPIOConfig->PinConfig.OutputType << (pGPIOConfig->PinConfig.Number));
+    pGPIODriver->pGPIOx->OTYPER &= ~(0x1 << (pGPIODriver->Config.Number));
+    pGPIODriver->pGPIOx->OTYPER |=
+        (pGPIODriver->Config.OutputType << (pGPIODriver->Config.Number));
 
     /* Speed configuration */
 
@@ -98,10 +98,10 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     //    10: High Speed
     //    11: Very High Speed
 
-    pGPIOConfig->pGPIOx->OSPEEDR &=
-        ~(0x3 << (2 * pGPIOConfig->PinConfig.Number));
-    pGPIOConfig->pGPIOx->OSPEEDR |= (0x3 & pGPIOConfig->PinConfig.Speed)
-                                    << (2 * pGPIOConfig->PinConfig.Number);
+    pGPIODriver->pGPIOx->OSPEEDR &=
+        ~(0x3 << (2 * pGPIODriver->Config.Number));
+    pGPIODriver->pGPIOx->OSPEEDR |= (0x3 & pGPIODriver->Config.Speed)
+                                    << (2 * pGPIODriver->Config.Number);
 
     /* Pull-up/Push-down configuration */
 
@@ -110,9 +110,9 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     //    01: Pull-up
     //    10: pull-down
 
-    pGPIOConfig->pGPIOx->PUPDR &= ~(0x3 << (2 * pGPIOConfig->PinConfig.Number));
-    pGPIOConfig->pGPIOx->PUPDR |= (0x3 & pGPIOConfig->PinConfig.PullUpDown)
-                                  << (2 * pGPIOConfig->PinConfig.Number);
+    pGPIODriver->pGPIOx->PUPDR &= ~(0x3 << (2 * pGPIODriver->Config.Number));
+    pGPIODriver->pGPIOx->PUPDR |= (0x3 & pGPIODriver->Config.PullUpDown)
+                                  << (2 * pGPIODriver->Config.Number);
 
     /* Alternate Function configuration */
 
@@ -123,16 +123,16 @@ DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pGPIOConfig) {
     //    .
     //    1111: AF15
 
-    if (pGPIOConfig->PinConfig.Mode == GPIO_MODE_AF) {
+    if (pGPIODriver->Config.Mode == GPIO_Mode_AlternateFunction) {
 
         uint8_t LorH, y;
         // Low or High AFR:
-        LorH = pGPIOConfig->PinConfig.Number / 8;
-        y = pGPIOConfig->PinConfig.Number % 8;
+        LorH = pGPIODriver->Config.Number / 8;
+        y = pGPIODriver->Config.Number % 8;
 
-        pGPIOConfig->pGPIOx->AFR[LorH] &= ~(0x4 << y);
-        pGPIOConfig->pGPIOx->AFR[LorH] |=
-            (pGPIOConfig->PinConfig.AlternateFunction << y);
+        pGPIODriver->pGPIOx->AFR[LorH] &= ~(0x4 << y);
+        pGPIODriver->pGPIOx->AFR[LorH] |=
+            (pGPIODriver->Config.AlternateFunction << y);
     }
 
     return OK;

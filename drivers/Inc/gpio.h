@@ -3,32 +3,32 @@
 
 #include "stm32f429zi.h"
 
-typedef enum {GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_AF, GPIO_MODE_ANALOG} GPIO_PIN_MODE;
-typedef enum {GPIO_OPTYPE_PUSHPULL, GPIO_OPTYPE_OPENDRAIN} GPIO_PIN_OPTYPE;
-typedef enum {GPIO_SPEED_LOW, GPIO_SPEED_MEDIUM, GPIO_SPEED_HIGH, GPIO_SPEED_VERYHIGH} GPIO_PIN_SPEED;
-typedef enum {GPIO_PUPD_NONE, GPIO_PUPD_PULLUP, GPIO_PUPD_PULLDOWN} GPIO_PIN_PUPD;
-typedef enum {GPIO_IT_DISABLE, GPIO_IT_FALL, GPIO_IT_RISE, GPIO_IT_RISEFALL}GPIO_IT_MODE;
+typedef enum {GPIO_Mode_Input, GPIO_Mode_Output, GPIO_Mode_AlternateFunction, GPIO_MODE_Analog} GPIO_Config_Mode;
+typedef enum {GPIO_OpType_PushPull, GPIO_OpTypE_OpenDrain} GPIO_Config_OpType;
+typedef enum {GPIO_Speed_Low, GPIO_Speed_Medium, GPIO_Speed_High, GPIO_Speed_VeryHigh} GPIO_Config_Speed;
+typedef enum {GPIO_PuPd_None, GPIO_PuPd_PullUp, GPIO_PuPd_PullDown} GPIO_Config_PuPd;
+typedef enum {GPIO_It_Disable, GPIO_It_Fall, GPIO_It_Rise, GPIO_It_RiseFall}GPIO_It_Mode;
 
 typedef struct{
   uint8_t Number;
-  GPIO_PIN_MODE Mode;
-  GPIO_PIN_OPTYPE OutputType;
-  GPIO_PIN_SPEED Speed;
-  GPIO_PIN_PUPD PullUpDown;
+  GPIO_Config_Mode Mode;
+  GPIO_Config_OpType OutputType;
+  GPIO_Config_Speed Speed;
+  GPIO_Config_PuPd PullUpDown;
   uint8_t AlternateFunction;
-}GPIO_PinConfig;
+}GPIO_ConfigTypeDef;
 
 
 typedef struct{
   GPIO_TypeDef *pGPIOx;
-  GPIO_PinConfig PinConfig;
-  GPIO_IT_MODE InterruptMode;
-}GPIO_ConfigTypeDef;
+  GPIO_ConfigTypeDef Config;
+  GPIO_It_Mode InterruptMode;
+}GPIO_DriverTypeDef;
 
 
 // functions
 
-DriverStatus GPIO_Init(GPIO_ConfigTypeDef *pgpioconfig);
+DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver);
 
 
 uint8_t GPIO_Pin_Read(GPIO_TypeDef *pGPIOx, uint8_t PinNumber);
