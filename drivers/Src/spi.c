@@ -2,6 +2,7 @@
 
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
                                        EnableDisable EnorDi);
+static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag);
 
 DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     // Enable clocks in ordr to configure the SPI
@@ -83,9 +84,18 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
 
     /* SSM management management */
 
-    pSPIDriver->pSPIx->CR1 |=
-        (pSPIDriver->Config.FrameFormat << SPI_CR1_LSBFIRST_Pos);
+    if (pSPIDriver->Config.SSM == SPI_SSM_Disable) {
+        // Disable Software management
+        pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SSM);
+        // Enable Slave Select
+        pSPIDriver->pSPIx->CR2 |= (SPI_CR2_SSOE);
 
+    } else if (pSPIDriver->Config.SSM == SPI_SSM_Enable) {
+        // Enable Software management
+        pSPIDriver->pSPIx->CR1 |= (SPI_CR1_SSM);
+        // Disable Slave Select
+        pSPIDriver->pSPIx->CR2 &= ~(SPI_CR2_SSOE);
+    }
     /* Data Frame Format Selection */
 
     // DFF[0]
@@ -95,6 +105,48 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
         (pSPIDriver->Config.DataFormat << SPI_CR1_DFF_Pos);
 
     return OK;
+}
+
+void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
+                  uint32_t Len) {
+    /* Send Data over SPIx, blocking mode */
+
+    // Enable SPI peripheral
+    pSPIDriver->pSPIx->CR1 |= (SPI_CR1_SPE);
+
+    // Block until Len = 0
+
+    while (Len) {
+        // Wait until TXe flags is HIGH
+        while (SPI_GetFlag(pSPIDriver->pSPIx, SPI_SR_TXE) != FLAG_HIGH) {
+            ;
+        }
+
+        if (pSPIDriver->Config.DataFormat == SPI_DataFormat_16bit) {
+
+            // Save 2 bytes into Data Register
+            pSPIDriver->pSPIx->DR = *((uint16_t *)pTxBuffer);
+            // Decrease Lenght by 2
+            Len--;
+            Len--;
+            (uint16_t *)pTxBuffer++;
+
+        } else {
+
+            // Save 1 byte into Data Register
+            pSPIDriver->pSPIx->DR = *(pTxBuffer);
+            // Decrease Lenght by 1
+            Len--;
+            pTxBuffer++;
+        }
+    }
+
+    // Wait until Busy Flag is LOW
+    while (SPI_GetFlag(pSPIDriver->pSPIx, SPI_SR_BSY) != FLAG_LOW)
+        ;
+
+    // Disable SPI
+    pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SPE);
 }
 
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
@@ -132,4 +184,11 @@ static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
             break;
         }
     }
+}
+
+static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag) {
+    if (pSPIx->SR & flag) {
+        return FLAG_HIGH;
+    }
+    return FLAG_LOW;
 }
