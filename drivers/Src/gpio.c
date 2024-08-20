@@ -129,9 +129,9 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
         LorH = pGPIODriver->Config.Number / 8;
         y = pGPIODriver->Config.Number % 8;
 
-        pGPIODriver->pGPIOx->AFR[LorH] &= ~(0x4 << y);
+        pGPIODriver->pGPIOx->AFR[LorH] &= ~(0x4 << (y * 4) );
         pGPIODriver->pGPIOx->AFR[LorH] |=
-            (pGPIODriver->Config.AlternateFunction << y);
+            (pGPIODriver->Config.AlternateFunction << (y * 4) );
     }
 
     return OK;

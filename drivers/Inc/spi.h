@@ -31,5 +31,7 @@ typedef struct{
 
 DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver);
 
+void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer, uint32_t Len);
+
 
 #endif // !__SPI_H__
