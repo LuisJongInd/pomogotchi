@@ -50,7 +50,7 @@ void GPIO_initialization(void) {
 }
 
 void SPI_initialization(void) {
-  
+
     SPI_DriverTypeDef spi1 = {0};
 
     spi1.pSPIx = SPI1;
@@ -65,7 +65,7 @@ void SPI_initialization(void) {
     SPI_Init(&spi1);
 
     SPI_DriverTypeDef spi3 = {0};
-     spi3.pSPIx = SPI3;
+    spi3.pSPIx = SPI3;
     spi3.Config.Type = SPI_Type_HalfDuplex;
     spi3.Config.Mode = SPI_Mode_3;
     spi3.Config.Hierarchy = SPI_Hierarchy_Slave;
@@ -74,7 +74,7 @@ void SPI_initialization(void) {
     spi3.Config.SSM = SPI_SSM_Enable;
     spi3.Config.DataFormat = SPI_DataFormat_16bit;
 
-    SPI_Init(&spi3); 
+    SPI_Init(&spi3);
 }
 
 void Test(void) {

@@ -9,7 +9,7 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
 
     GPIO_PeripheralClockControl(pGPIODriver->pGPIOx, ENABLE);
 
-  /* Check for incorrect configuration values */
+    /* Check for incorrect configuration values */
     if ((pGPIODriver->Config.Number > 15) ||
         (pGPIODriver->Config.AlternateFunction > 15))
         return ERROR;
@@ -98,8 +98,7 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
     //    10: High Speed
     //    11: Very High Speed
 
-    pGPIODriver->pGPIOx->OSPEEDR &=
-        ~(0x3 << (2 * pGPIODriver->Config.Number));
+    pGPIODriver->pGPIOx->OSPEEDR &= ~(0x3 << (2 * pGPIODriver->Config.Number));
     pGPIODriver->pGPIOx->OSPEEDR |= (0x3 & pGPIODriver->Config.Speed)
                                     << (2 * pGPIODriver->Config.Number);
 
