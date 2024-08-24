@@ -3,6 +3,8 @@
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
                                        EnableDisable EnorDi);
 static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag);
+static void SPI_IRQHandleTXe(SPI_DriverTypeDef *pSPIDriver);
+static void SPI_CloseTransmission(SPI_DriverTypeDef *pSPIDriver);
 
 DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     // Enable clocks in ordr to configure the SPI
@@ -24,8 +26,8 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     } else if (pSPIDriver->Config.Type == SPI_Type_RxOnly) {
         // BIDIMODE[0] = 0
         pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_BIDIMODE);
-        // RXONLY[0] is used with BIDIMODE to select the direction of transfer
-        // in 2-line mode.
+        // RXONLY[0] is used with BIDIMODE to select the direction of
+        // transfer in 2-line mode.
         //  0: Full Duplex (transmit and receive)
         //  1: Output disabled (Receive-only mode)
         pSPIDriver->pSPIx->CR1 |= ~(SPI_CR1_RXONLY);
@@ -149,6 +151,73 @@ void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
     pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SPE);
 }
 
+DriverStatus SPI_SendDataIT(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
+                            uint32_t Len) {
+    /* Send Data over SPIx, IT mode */
+
+    // Verify Tx is not busy already
+    if (pSPIDriver->TxState == SPI_TxState_Busy) {
+        return BUSY;
+    }
+
+    // Save Len and pointer variables inside the SPI Driver Struct
+    pSPIDriver->TxState = SPI_TxState_Busy;
+    pSPIDriver->TxLen = Len;
+    pSPIDriver->pTxBuffer = pTxBuffer;
+
+    // Configure SPI interruption
+    // TXEIE[0] Enables the Tx Buffer interrupt enable
+    //    0: TXE masked
+    //    1: TXE not masked, used ot generated TXE interrupts
+
+    pSPIDriver->pSPIx->CR2 |= SPI_CR2_TXEIE;
+
+    // Enable SPI peripheral
+    pSPIDriver->pSPIx->CR1 |= (SPI_CR1_SPE);
+
+    return OK;
+}
+
+void SPI_IRQ_Handling(SPI_DriverTypeDef *pSPIDriver) {
+    /* Handling any SPI interruption arised */
+
+    // Check if the interruption is due to TXE by checking
+    // if Tx Empty is enabled in CR2 and if TX Empty flag is set in SR
+    if ((pSPIDriver->pSPIx->CR2 >> SPI_CR2_TXEIE_Pos) &&
+        (pSPIDriver->pSPIx->SR >> SPI_SR_TXE_Pos)) {
+        // TX buffer ready to sent new data
+        SPI_IRQHandleTXe(pSPIDriver);
+    }
+}
+
+void SPI_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
+    /* Enabling/Disabling SPI interruptions*/
+
+    // To enable interruptions we use NVIC_ISERx register. This
+    // is a set of 8 registers that configure up to 91 interruptions
+
+    // CMSIS provides functions for enabling/disabling interruptions
+    if (EnOrDi == ENABLE) {
+        // param of this function is a IRQn_Type which is an enum defined
+        // in stm32f429xx header file
+        __NVIC_EnableIRQ(IRQNumber);
+    } else {
+        __NVIC_DisableIRQ(IRQNumber);
+    }
+}
+
+void SPI_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
+
+    /* Configuring SPI interruptions priority */
+
+    // To configure the priority, the NVIC_IPRx registers are used. Those
+    // are 60 registers used to configure the prioritie values of each
+    // interruptions available
+
+    // Using CMSIS defined function
+    __NVIC_SetPriority(IRQNumber, IRQPriority);
+}
+
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
                                        EnableDisable EnorDi) {
 
@@ -191,4 +260,52 @@ static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag) {
         return FLAG_HIGH;
     }
     return FLAG_LOW;
+}
+
+static void SPI_IRQHandleTXe(SPI_DriverTypeDef *pSPIDriver) {
+    /* Send data withouth blocking */
+
+    if (pSPIDriver->Config.DataFormat == SPI_DataFormat_16bit) {
+
+        // Save 2 bytes into Data Register
+        pSPIDriver->pSPIx->DR = *((uint16_t *)pSPIDriver->pTxBuffer);
+        // Decrease Lenght by 2
+        pSPIDriver->TxLen--;
+        pSPIDriver->TxLen--;
+        (uint16_t *)pSPIDriver->pTxBuffer++;
+
+    } else {
+
+        // Save 1 byte into Data Register
+        pSPIDriver->pSPIx->DR = *(pSPIDriver->pTxBuffer);
+        // Decrease Lenght by 1
+        pSPIDriver->TxLen--;
+        pSPIDriver->pTxBuffer++;
+    }
+
+    if (pSPIDriver->TxLen == 0) {
+        SPI_CloseTransmission(pSPIDriver);
+        SPI_CallbackTxCompleted(pSPIDriver);
+    }
+}
+
+static void SPI_CloseTransmission(SPI_DriverTypeDef *pSPIDriver) {
+    // Disabling the interruption
+
+    pSPIDriver->pSPIx->CR2 &= ~(SPI_CR2_TXEIE);
+
+    // Re-initialaze holded variables
+    pSPIDriver->pTxBuffer = NULL;
+    pSPIDriver->TxLen = 0;
+
+    // Setting state as ready to be available again
+    pSPIDriver->TxState = SPI_TxState_Ready;
+
+    // Disable SPI
+    pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SPE);
+}
+
+__weak void SPI_CallbackTxCompleted(SPI_DriverTypeDef *pSPIDriver) {
+    // nullify the unused variable
+    (void)pSPIDriver;
 }

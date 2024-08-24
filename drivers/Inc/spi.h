@@ -3,6 +3,7 @@
 
 #include "stm32f429zi.h"
 
+
 typedef enum  { SPI_Type_FullDuplex,  SPI_Type_HalfDuplex, SPI_Type_RxOnly} SPI_Config_Type; 
 typedef enum  { SPI_Mode_0, SPI_Mode_1, SPI_Mode_2, SPI_Mode_3 } SPI_Config_Mode;
 typedef enum { SPI_Hierarchy_Slave, SPI_Hierarchy_Master }SPI_Config_Hierarchy;
@@ -11,7 +12,8 @@ typedef enum { SPI_FrameFormat_MSBFirst,  SPI_FrameFormat_LSBFirst } SPI_Config_
 typedef enum { SPI_SSM_Disable, SPI_SSM_Enable } SPI_Config_SSM;
 typedef enum { SPI_DataFormat_8bit, SPI_DataFormat_16bit } SPI_Config_DataFormat;
 
-typedef enum { SPI_It_Disable}SPI_It_Mode;
+typedef enum { SPI_It_Disable, SPI_It_Enable}SPI_It_Mode;
+typedef enum { SPI_TxState_Ready, SPI_TxState_Busy} SPI_IT_TxState;
 
 typedef struct{
    SPI_Config_Type Type;
@@ -26,12 +28,22 @@ typedef struct{
 typedef struct{
   SPI_TypeDef *pSPIx;
   SPI_ConfigTypeDef Config;
-  SPI_It_Mode InterrupMode;
+  SPI_It_Mode InterruptMode;
+  uint32_t TxLen;
+  uint8_t *pTxBuffer;
+  SPI_IT_TxState TxState;
 }SPI_DriverTypeDef;
 
 DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver);
 
 void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer, uint32_t Len);
 
+DriverStatus SPI_SendDataIT(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer, uint32_t Len);
+
+void SPI_IRQ_Handling(SPI_DriverTypeDef *pSPIDriver);
+void SPI_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi);
+void SPI_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority);
+
+void SPI_CallbackTxCompleted(SPI_DriverTypeDef *pSPIDriver);
 
 #endif // !__SPI_H__
