@@ -1,5 +1,7 @@
 #include "gpio.h"
 
+// avoid multiple definitions
+
 static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
                                         EnableDisable EnorDi);
 static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx);
@@ -129,9 +131,9 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
         LorH = pGPIODriver->Config.Number / 8;
         y = pGPIODriver->Config.Number % 8;
 
-        pGPIODriver->pGPIOx->AFR[LorH] &= ~(0x4 << (y * 4) );
+        pGPIODriver->pGPIOx->AFR[LorH] &= ~(0x4 << (y * 4));
         pGPIODriver->pGPIOx->AFR[LorH] |=
-            (pGPIODriver->Config.AlternateFunction << (y * 4) );
+            (pGPIODriver->Config.AlternateFunction << (y * 4));
     }
 
     return OK;

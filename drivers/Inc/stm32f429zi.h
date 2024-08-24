@@ -3,6 +3,7 @@
 
 
 #include <stdint.h>
+#include <stddef.h>
 #include "stm32f429xx.h"
 
 // Clocks values definitions
@@ -13,7 +14,7 @@
 #define __vo volatile
 #define __weak __attribute__((weak))
 
-typedef enum{ERROR, OK}DriverStatus;
+typedef enum{ERROR, OK, BUSY }DriverStatus;
 typedef enum {DISABLE, ENABLE} EnableDisable;
 typedef enum {LOW, HIGH} PinLogicalLevel;
 typedef enum {FLAG_LOW, FLAG_HIGH} FlagStatus;
