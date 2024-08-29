@@ -9,6 +9,7 @@ typedef struct {
   GPIO_TypeDef *pGPIOx;
     uint8_t DC_PinNumber;
   uint8_t Busy_PinNumber;
+  uint8_t Reset_PinNumber;
   // SPI related variables
 } EinkPaper_TypeDef;
 
