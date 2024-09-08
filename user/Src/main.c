@@ -9,8 +9,10 @@ char msg[] = "Hello world";
  */
 
 int main(void) {
-
+    SystemTickInit();
     eInkDisplay_Init();
+    eInkDisplay_FillBlack();
+    eInkDisplay_FillWhite();
     Test();
 
     while (1) {
