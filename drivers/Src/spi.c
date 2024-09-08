@@ -95,6 +95,8 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     } else if (pSPIDriver->Config.SSM == SPI_SSM_Enable) {
         // Enable Software management
         pSPIDriver->pSPIx->CR1 |= (SPI_CR1_SSM);
+        // enable SSU to avoid MODF error
+        pSPIDriver->pSPIx->CR1 |= (SPI_CR1_SSI);
         // Disable Slave Select
         pSPIDriver->pSPIx->CR2 &= ~(SPI_CR2_SSOE);
     }

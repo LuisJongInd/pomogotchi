@@ -7,7 +7,8 @@
 typedef struct {
   // GPIO related variables 
   GPIO_TypeDef *pGPIOx;
-    uint8_t DC_PinNumber;
+  uint8_t DC_PinNumber;
+  uint8_t CS_PinNumber;
   uint8_t Busy_PinNumber;
   uint8_t Reset_PinNumber;
   // SPI related variables
@@ -16,5 +17,7 @@ typedef struct {
 
 
 void eInkDisplay_Init(void);
+void eInkDisplay_FillWhite(void);
+void eInkDisplay_FillBlack(void);
 
 #endif // !__EINKPAPER_H__

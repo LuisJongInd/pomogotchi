@@ -4,8 +4,8 @@ EinkPaper_TypeDef epaper_2_13;
 SPI_DriverTypeDef spi1;
 
 // display has a 122 x 250 resolution
-uint8_t gate_outputs = 0xFA;   // 250
-uint8_t source_outputs = 0x7A; // 122
+uint8_t einkDisplay_Width = 250; // 250
+uint8_t einkDisplay_High = 0xFA;  // 122
 
 static void eInkDisplay_GPIO_Init(void);
 static void eInkDisplay_SPI_Init(void);
@@ -13,60 +13,38 @@ static void eInkDisplay_Sequence_Init(void);
 static void eInkDisplay_HW_Reset(void);
 static void eInkDisplay_SendData(uint8_t data);
 static void eInkDisplay_SendCommand(uint8_t command);
+static void eInkDisplay_UpdateDisplay(void);
 
 void eInkDisplay_Init(void) {
     // Peripherla and Pin initialization
     eInkDisplay_GPIO_Init();
     eInkDisplay_SPI_Init();
-
     eInkDisplay_Sequence_Init();
+}
 
-    // avoid unused
-    (void)eInkDisplay_SendData(0x00);
-    (void)eInkDisplay_SendCommand(0x00);
+void eInkDisplay_FillWhite(void) {
+
+    eInkDisplay_SendCommand(0x24);
+    for (uint8_t h = 0; h < einkDisplay_High; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8; w++) {
+            eInkDisplay_SendData(0xFF);
+        }
+    }
+    eInkDisplay_UpdateDisplay();
+}
+
+void eInkDisplay_FillBlack(void) {
+    eInkDisplay_SendCommand(0x24);
+    for (uint8_t h = 0; h < einkDisplay_High; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8; w++) {
+            eInkDisplay_SendData(0x00); // 00
+        }
+    }
+    eInkDisplay_UpdateDisplay();
 }
 
 void eInkDisplay_GPIO_Init(void) {
     /* Gpio pin initialization */
-
-    // Data/Command Pin (GPIO Output Pin):
-    //  This is used in order to select between sending a command or sending
-    //  data.
-
-    GPIO_DriverTypeDef DS_Pin = {0};
-    DS_Pin.pGPIOx = GPIOB;
-    DS_Pin.Config.Number = 2;
-    DS_Pin.Config.Mode = GPIO_Mode_Output;
-    DS_Pin.Config.OutputType = GPIO_OpType_PushPull;
-    DS_Pin.Config.Speed = GPIO_Speed_VeryHigh;
-    DS_Pin.Config.PullUpDown = GPIO_PuPd_None;
-    GPIO_Init(&DS_Pin);
-
-    // Busy pin is used to indicate whenever the display's CPU is busy, it
-    // should not be interurpted during this
-    GPIO_DriverTypeDef Busy_Pin;
-    Busy_Pin.pGPIOx = GPIOB;
-    Busy_Pin.Config.Number = 5;
-    Busy_Pin.Config.Mode = GPIO_Mode_Input;
-    Busy_Pin.Config.PullUpDown = GPIO_PuPd_None;
-    GPIO_Init(&Busy_Pin);
-
-    // Reset Pin is used to make  a HW reset
-    GPIO_DriverTypeDef Reset_Pin;
-    Reset_Pin.pGPIOx = GPIOB;
-    Reset_Pin.Config.Number = 8;
-    Reset_Pin.Config.Mode = GPIO_Mode_Output;
-    Reset_Pin.Config.OutputType = GPIO_OpType_PushPull;
-    Reset_Pin.Config.Speed = GPIO_Speed_VeryHigh;
-    Reset_Pin.Config.PullUpDown = GPIO_PuPd_None;
-    GPIO_Init(&Reset_Pin);
-    // Initialaze EinkPaper_TypeDef struct with information related with
-    // initialization
-
-    epaper_2_13.pGPIOx = GPIOB;
-    epaper_2_13.DC_PinNumber = DS_Pin.Config.Number;
-    epaper_2_13.Busy_PinNumber = Busy_Pin.Config.Number;
-    epaper_2_13.Reset_PinNumber = Reset_Pin.Config.Number;
 
     // Configuring SPI peripheral
 
@@ -94,17 +72,59 @@ void eInkDisplay_GPIO_Init(void) {
 
     GPIO_Init(&spi_SCK);
 
-  GPIO_DriverTypeDef spi_CSS = {0};
+    GPIO_DriverTypeDef spi_CS = {0};
 
-    spi_CSS.pGPIOx = GPIOA;
-    spi_CSS.Config.Number = 4;
-    spi_CSS.Config.Mode = GPIO_Mode_AlternateFunction;
-    spi_CSS.Config.OutputType = GPIO_OpType_PushPull;
-    spi_CSS.Config.Speed = GPIO_Speed_High;
-    spi_CSS.Config.PullUpDown = GPIO_PuPd_None;
-    spi_CSS.Config.AlternateFunction = 5;
+    spi_CS.pGPIOx = GPIOB;
+    spi_CS.Config.Number = 0;
+    spi_CS.Config.Mode = GPIO_Mode_Output;
+    spi_CS.Config.OutputType = GPIO_OpType_PushPull;
+    spi_CS.Config.Speed = GPIO_Speed_VeryHigh;
+    spi_CS.Config.PullUpDown = GPIO_PuPd_None;
 
-    GPIO_Init(&spi_CSS);
+    GPIO_Init(&spi_CS);
+
+    // Data/Command Pin (GPIO Output Pin):
+    //  This is used in order to select between sending a command or sending
+    //  data.
+
+    GPIO_DriverTypeDef DS_Pin = {0};
+    DS_Pin.pGPIOx = GPIOB;
+    DS_Pin.Config.Number = 2;
+    DS_Pin.Config.Mode = GPIO_Mode_Output;
+    DS_Pin.Config.OutputType = GPIO_OpType_PushPull;
+    DS_Pin.Config.Speed = GPIO_Speed_VeryHigh;
+    DS_Pin.Config.PullUpDown = GPIO_PuPd_None;
+    GPIO_Init(&DS_Pin);
+
+    // Reset Pin is used to make  a HW reset
+    GPIO_DriverTypeDef Reset_Pin;
+    Reset_Pin.pGPIOx = GPIOB;
+    Reset_Pin.Config.Number = 8;
+    Reset_Pin.Config.Mode = GPIO_Mode_Output;
+    Reset_Pin.Config.OutputType = GPIO_OpType_PushPull;
+    Reset_Pin.Config.Speed = GPIO_Speed_VeryHigh;
+    Reset_Pin.Config.PullUpDown = GPIO_PuPd_None;
+    GPIO_Init(&Reset_Pin);
+
+    // Busy pin is used to indicate whenever the display's CPU is busy, it
+    // should not be interurpted during this
+    GPIO_DriverTypeDef Busy_Pin;
+    Busy_Pin.pGPIOx = GPIOB;
+    Busy_Pin.Config.Number = 5;
+    Busy_Pin.Config.Mode = GPIO_Mode_Input;
+    Busy_Pin.Config.PullUpDown = GPIO_PuPd_None;
+    GPIO_Init(&Busy_Pin);
+
+    // Initialaze EinkPaper_TypeDef struct with information related with
+    // initialization
+
+    epaper_2_13.pGPIOx = GPIOB;
+    epaper_2_13.DC_PinNumber = DS_Pin.Config.Number;
+    epaper_2_13.CS_PinNumber = spi_CS.Config.Number;
+    epaper_2_13.Busy_PinNumber = Busy_Pin.Config.Number;
+    epaper_2_13.Reset_PinNumber = Reset_Pin.Config.Number;
+
+    GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
 }
 
 // TODO: Consider making an file that contain all handler in the bsp level
@@ -122,7 +142,7 @@ void eInkDisplay_SPI_Init(void) {
     spi1.Config.Hierarchy = SPI_Hierarchy_Master;
     spi1.Config.BaudRate = SPI_BaudRate_div16;
     spi1.Config.FrameFormat = SPI_FrameFormat_MSBFirst;
-    spi1.Config.SSM = SPI_SSM_Disable;
+    spi1.Config.SSM = SPI_SSM_Enable;
     spi1.Config.DataFormat = SPI_DataFormat_8bit;
 
     SPI_Init(&spi1);
@@ -131,27 +151,35 @@ void eInkDisplay_SPI_Init(void) {
 static void eInkDisplay_HW_Reset(void) {
     // To make a HW reset, Reset pin must go low
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, HIGH);
+    delay(20);
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, LOW);
+    delay(2);
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, HIGH);
+    delay(20);
 }
 
 static void eInkDisplay_Sequence_Init(void) {
     /* Display initialization */
 
     // Wait for 10 ms after energy supply
-    // TODO: Delay function
-    for (uint32_t i = 0; i < 16000; i++) {;}
+    delay(10);
     // HW reset
 
     eInkDisplay_HW_Reset();
 
+    while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
+        ;
+    }
+
     // Command: SW Reset (0x12)
     eInkDisplay_SendCommand(0x12);
 
+    while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
+        ;
+    }
     // Wait 10 ms
     // TODO: Delay function
-    for (uint32_t i = 0; i < 16000; i++) {;}
-
+    delay(10);
     // Command: gate driver output (0x01)
     eInkDisplay_SendCommand(0x01);
     // Data:
@@ -168,8 +196,8 @@ static void eInkDisplay_Sequence_Init(void) {
     //          1: Frrom top to button (reversed)
 
     // Selecting 250 - 1 gate outputs
-    eInkDisplay_SendData(gate_outputs - 1); // first byte [7:0]
-    eInkDisplay_SendData(0x00);             // last bit [8]
+    eInkDisplay_SendData(einkDisplay_Width - 1); // first byte [7:0]
+    eInkDisplay_SendData(0x00);                  // last bit [8]
     // Select 0 as the first gate to scan in sequential order,
     // from button to top
     eInkDisplay_SendData(0x00);
@@ -200,7 +228,7 @@ static void eInkDisplay_Sequence_Init(void) {
     //    [5:0]: x RAM end position
     // Select x start as 0 and end as source outputs - 1
     eInkDisplay_SendData(0x00);
-    eInkDisplay_SendData(source_outputs - 1);
+    eInkDisplay_SendData(einkDisplay_Width - 1);
 
     // Command: Set RAM x widht (0x45)
     eInkDisplay_SendCommand(0x45);
@@ -210,37 +238,53 @@ static void eInkDisplay_Sequence_Init(void) {
     //    [8:0]: y RAM end position
     // Select y start as 0 and end as gate outputs - 1
 
-    eInkDisplay_SendData(0x00);             // [7:0]
-    eInkDisplay_SendData(0x00);             // [8]
-    eInkDisplay_SendData(gate_outputs - 1); // [7:0]
-    eInkDisplay_SendData(0x00);             // [8]
+    eInkDisplay_SendData(0x00);                 // [7:0]
+    eInkDisplay_SendData(0x00);                 // [8]
+    eInkDisplay_SendData(einkDisplay_High - 1); // [7:0]
+    eInkDisplay_SendData(0x00);                 // [8]
 
     // Command: Set panel border (0x3C)
     eInkDisplay_SendCommand(0x3C);
     eInkDisplay_SendData(0x05);
+
+    eInkDisplay_SendCommand(0x21);
+    eInkDisplay_SendData(0x00);
+    eInkDisplay_SendData(0x80);
     //
     // Command: Sense temperature by int/ext TS (0x18)
     eInkDisplay_SendCommand(0x18);
     eInkDisplay_SendData(0x80); // int temperature sensor
 
-    // Command: Display update control (0x22)
-    eInkDisplay_SendCommand(0x22);
-    eInkDisplay_SendData(0x91);
-
-    eInkDisplay_SendCommand(0x20); // update display control
-
     // Wait busy
-    // while ( !GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber) );
+    while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
+        ;
+    }
 }
 
 static void eInkDisplay_SendData(uint8_t data) {
     // Send Data, D/C should be HIGH
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.DC_PinNumber, HIGH);
+    GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, LOW);
     SPI_SendData(&spi1, &data, 1);
+    GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
 }
 
 static void eInkDisplay_SendCommand(uint8_t command) {
     // Send Command, D/C should be LOW
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.DC_PinNumber, LOW);
+    GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, LOW);
     SPI_SendData(&spi1, &command, 1);
+    GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
+}
+
+static void eInkDisplay_UpdateDisplay(void) {
+    // Command: Display update control (0x22)
+    eInkDisplay_SendCommand(0x22);
+    eInkDisplay_SendData(0xf7);
+
+    eInkDisplay_SendCommand(0x20); // update display control
+
+    while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
+        ;
+    }
 }
