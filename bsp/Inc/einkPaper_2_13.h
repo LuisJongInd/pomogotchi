@@ -3,6 +3,11 @@
 
 #include "stm32f429zi.h"
 
+extern uint8_t einkDisplay_Width;
+extern uint8_t einkDisplay_Height;
+extern uint8_t *pImage;
+
+// display has a 122 x 250 resolution
 
 typedef struct {
   // GPIO related variables 
@@ -19,5 +24,6 @@ typedef struct {
 void eInkDisplay_Init(void);
 void eInkDisplay_FillWhite(void);
 void eInkDisplay_FillBlack(void);
+void eInkDisplay_DisplayImage(uint8_t *pImage);
 
 #endif // !__EINKPAPER_H__

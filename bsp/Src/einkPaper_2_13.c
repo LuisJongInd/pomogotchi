@@ -4,8 +4,8 @@ EinkPaper_TypeDef epaper_2_13;
 SPI_DriverTypeDef spi1;
 
 // display has a 122 x 250 resolution
-uint8_t einkDisplay_Width = 250; // 250
-uint8_t einkDisplay_High = 0xFA;  // 122
+uint8_t einkDisplay_Width = 122;
+uint8_t einkDisplay_Height = 250;
 
 static void eInkDisplay_GPIO_Init(void);
 static void eInkDisplay_SPI_Init(void);
@@ -25,8 +25,8 @@ void eInkDisplay_Init(void) {
 void eInkDisplay_FillWhite(void) {
 
     eInkDisplay_SendCommand(0x24);
-    for (uint8_t h = 0; h < einkDisplay_High; h++) {
-        for (uint8_t w = 0; w < einkDisplay_Width / 8; w++) {
+    for (uint8_t h = 0; h < einkDisplay_Height; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
             eInkDisplay_SendData(0xFF);
         }
     }
@@ -35,9 +35,20 @@ void eInkDisplay_FillWhite(void) {
 
 void eInkDisplay_FillBlack(void) {
     eInkDisplay_SendCommand(0x24);
-    for (uint8_t h = 0; h < einkDisplay_High; h++) {
-        for (uint8_t w = 0; w < einkDisplay_Width / 8; w++) {
+    for (uint8_t h = 0; h < einkDisplay_Height; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
             eInkDisplay_SendData(0x00); // 00
+        }
+    }
+    eInkDisplay_UpdateDisplay();
+}
+
+void eInkDisplay_DisplayImage(uint8_t *pImage) {
+
+    eInkDisplay_SendCommand(0x24);
+    for (uint8_t h = 0; h < einkDisplay_Height; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
+            eInkDisplay_SendData(pImage[w + h * (einkDisplay_Width / 8 + 1) ]);
         }
     }
     eInkDisplay_UpdateDisplay();
@@ -196,8 +207,8 @@ static void eInkDisplay_Sequence_Init(void) {
     //          1: Frrom top to button (reversed)
 
     // Selecting 250 - 1 gate outputs
-    eInkDisplay_SendData(einkDisplay_Width - 1); // first byte [7:0]
-    eInkDisplay_SendData(0x00);                  // last bit [8]
+    eInkDisplay_SendData(einkDisplay_Height - 1); // first byte [7:0]
+    eInkDisplay_SendData(0x00);                   // last bit [8]
     // Select 0 as the first gate to scan in sequential order,
     // from button to top
     eInkDisplay_SendData(0x00);
@@ -228,7 +239,8 @@ static void eInkDisplay_Sequence_Init(void) {
     //    [5:0]: x RAM end position
     // Select x start as 0 and end as source outputs - 1
     eInkDisplay_SendData(0x00);
-    eInkDisplay_SendData(einkDisplay_Width - 1);
+    eInkDisplay_SendData((einkDisplay_Width - 1) /
+                         8); // by every RAM unit (8 bits)
 
     // Command: Set RAM x widht (0x45)
     eInkDisplay_SendCommand(0x45);
@@ -238,10 +250,19 @@ static void eInkDisplay_Sequence_Init(void) {
     //    [8:0]: y RAM end position
     // Select y start as 0 and end as gate outputs - 1
 
-    eInkDisplay_SendData(0x00);                 // [7:0]
-    eInkDisplay_SendData(0x00);                 // [8]
-    eInkDisplay_SendData(einkDisplay_High - 1); // [7:0]
-    eInkDisplay_SendData(0x00);                 // [8]
+    eInkDisplay_SendData(0x00);                     // [7:0]
+    eInkDisplay_SendData(0x00);                     // [8]
+    eInkDisplay_SendData((einkDisplay_Height - 1)); // [7:0]
+    eInkDisplay_SendData(0x00);                     // [8]
+
+    // Command: Set RAM x Counter (0x4E)
+    eInkDisplay_SendCommand(0x4E);
+    eInkDisplay_SendData(0x00);
+
+    // Command: Set RAM x Counter (0x4F)
+    eInkDisplay_SendCommand(0x4E);
+    eInkDisplay_SendData(0x00);
+    eInkDisplay_SendData(0x00);
 
     // Command: Set panel border (0x3C)
     eInkDisplay_SendCommand(0x3C);
@@ -280,7 +301,7 @@ static void eInkDisplay_SendCommand(uint8_t command) {
 static void eInkDisplay_UpdateDisplay(void) {
     // Command: Display update control (0x22)
     eInkDisplay_SendCommand(0x22);
-    eInkDisplay_SendData(0xf7);
+    eInkDisplay_SendData(0xF7);
 
     eInkDisplay_SendCommand(0x20); // update display control
 
