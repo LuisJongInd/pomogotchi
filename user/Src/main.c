@@ -11,7 +11,8 @@ char msg[] = "Hello world";
 int main(void) {
     SystemTickInit();
     eInkDisplay_Init();
-    eInkDisplay_FillBlack();
+    Image_displayImage();
+    delay(1000);
     eInkDisplay_FillWhite();
     Test();
 
