@@ -133,6 +133,19 @@ SA_INC = -I $(BSP_DIR)/Inc \
 #enabling all errors but missing include files
 SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=missingInclude:*.h  $(SA_INC) $(SA_SOURCES)
 
+#######################################################################################################################################################
+#                                                                                                                                                     #
+#                                                                                                                                                     #
+#                                                                      # Formatting #                                                                 #  
+#                                                                                                                                                     #
+#                                                                                                                                                     #
+#######################################################################################################################################################
+
+FORMAT = clang-format-15 -i
+# avoid formatting image data since it will modify the number of columns of the array
+FORMAT_SOURCES = $(filter-out bsp/Src/image_data.c, $(PROJECT_SOURCES))
+FORMAT_SOURCES = $(filter-out bsp/Src/alphanumbers.c, $(PROJECT_SOURCES))
+
 
 #######################################################################################################################################################
 #                                                                                                                                                     #
@@ -192,7 +205,7 @@ static_analysis:
 	@$(SA) $(SA_FLAGS)
 
 format:
-	@clang-format-15 -i $(PROJECT_SOURCES)
+	@$(FORMAT) -i $(FORMAT_SOURCES)
 
 
 # clean the project
