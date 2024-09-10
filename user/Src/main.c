@@ -11,6 +11,7 @@ char msg[] = "Hello world";
 int main(void) {
     SystemTickInit();
     eInkDisplay_Init();
+    Image_drawString((uint8_t *)"ABCDEFHIJKLMNOPQRSTUVWXYZ1234567890\0");
     Image_displayImage();
     delay(1000);
     eInkDisplay_FillWhite();

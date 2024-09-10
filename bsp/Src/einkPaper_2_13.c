@@ -48,7 +48,7 @@ void eInkDisplay_DisplayImage(uint8_t *pImage) {
     eInkDisplay_SendCommand(0x24);
     for (uint8_t h = 0; h < einkDisplay_Height; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
-            eInkDisplay_SendData(pImage[w + h * (einkDisplay_Width / 8 + 1) ]);
+            eInkDisplay_SendData(pImage[w + h * (einkDisplay_Width / 8 + 1)]);
         }
     }
     eInkDisplay_UpdateDisplay();
@@ -259,8 +259,8 @@ static void eInkDisplay_Sequence_Init(void) {
     eInkDisplay_SendCommand(0x4E);
     eInkDisplay_SendData(0x00);
 
-    // Command: Set RAM x Counter (0x4F)
-    eInkDisplay_SendCommand(0x4E);
+    // Command: Set RAM y Counter (0x4F)
+    eInkDisplay_SendCommand(0x4F);
     eInkDisplay_SendData(0x00);
     eInkDisplay_SendData(0x00);
 
