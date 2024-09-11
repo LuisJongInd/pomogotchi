@@ -143,8 +143,7 @@ SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=mi
 
 FORMAT = clang-format-15 -i
 # avoid formatting image data since it will modify the number of columns of the array
-FORMAT_SOURCES = $(filter-out bsp/Src/image_data.c, $(PROJECT_SOURCES))
-FORMAT_SOURCES = $(filter-out bsp/Src/alphanumbers.c, $(PROJECT_SOURCES))
+FORMAT_SOURCES = $(filter-out $(wildcard bsp/Src/*_dataArray.c), $(PROJECT_SOURCES))
 
 
 #######################################################################################################################################################
