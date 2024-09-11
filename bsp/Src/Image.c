@@ -51,4 +51,6 @@ void Image_drawString(uint8_t *c) {
     while (*c != '\0') {
         Image_drawChar(c++);
     }
+    pos_y++;
+    pos_x=0;
 }
