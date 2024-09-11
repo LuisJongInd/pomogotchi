@@ -15,7 +15,12 @@ int main(void) {
     Image_drawString((uint8_t *)"  REST\0");
     Image_displayImage();
     delay(1000);
-    // eInkDisplay_FillWhite();
+    eInkDisplay_FillWhite();
+    delay(1000);
+    Image_clearStrings();
+    Image_drawString((uint8_t *)" LONG\0");
+    Image_drawString((uint8_t *)"  REST\0");
+    Image_displayImage();
     Test();
 
     while (1) {

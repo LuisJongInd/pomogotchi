@@ -9,7 +9,9 @@ uint8_t pos_y = 0;
 
 static void Image_drawChar(uint8_t *c);
 
-void Image_displayImage(void) { eInkDisplay_DisplayImage(Image); }
+void Image_displayImage(void) {
+    eInkDisplay_DisplayImage(Image_array, character_bitmap);
+}
 
 static void Image_drawChar(uint8_t *c) {
     uint8_t letterNumber = *c - (uint8_t)'0';
@@ -30,9 +32,9 @@ static void Image_drawChar(uint8_t *c) {
                 // the char is at y * char_widt (since each line in y direction
                 // has 2 bytes of the x direction) plus an offset corresponding
                 // to the ascii number in the array
-                Image[(y * display_width) +
-                      (display_width * char_height * pos_y) + (x) +
-                      (pos_x * 2)] =
+                Image_array[(y * display_width) +
+                            (display_width * char_height * pos_y) + (x) +
+                            (pos_x * 2)] =
                     alphaNumbers[x + (y * char_width) +
                                  (letterNumber * char_height * char_width)];
             }
@@ -46,6 +48,22 @@ static void Image_drawChar(uint8_t *c) {
         pos_y %= display_width;
     }
 }
+void Image_clearStrings(void) {
+
+
+    uint8_t amountOfChars = pos_x * pos_y;
+    pos_y = 0;
+    pos_x = 0;
+
+    for (uint8_t i = 0; i < amountOfChars; i++) {
+        Image_drawChar((uint8_t*)'[');
+    }
+
+    pos_x = 0;
+    pos_y = 0;
+}
+
+void Image_drawTamagotchi(void) { ; }
 
 void Image_drawString(uint8_t *c) {
     while (*c != '\0') {

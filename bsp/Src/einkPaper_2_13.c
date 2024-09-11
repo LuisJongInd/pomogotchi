@@ -43,12 +43,18 @@ void eInkDisplay_FillBlack(void) {
     eInkDisplay_UpdateDisplay();
 }
 
-void eInkDisplay_DisplayImage(uint8_t *pImage) {
+void eInkDisplay_DisplayImage(uint8_t *pImage, uint8_t *character_bitmap) {
 
     eInkDisplay_SendCommand(0x24);
-    for (uint8_t h = 0; h < einkDisplay_Height; h++) {
+    for (uint8_t h = 0; h < (einkDisplay_Height) / 2; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
             eInkDisplay_SendData(pImage[w + h * (einkDisplay_Width / 8 + 1)]);
+        }
+    }
+    for (uint8_t h = 0; h < (einkDisplay_Height) / 2; h++) {
+        for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
+            eInkDisplay_SendData(
+                character_bitmap[w + h * (einkDisplay_Width / 8 + 1)]);
         }
     }
     eInkDisplay_UpdateDisplay();
