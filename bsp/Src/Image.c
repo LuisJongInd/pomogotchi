@@ -52,5 +52,5 @@ void Image_drawString(uint8_t *c) {
         Image_drawChar(c++);
     }
     pos_y++;
-    pos_x=0;
+    pos_x = 0;
 }
