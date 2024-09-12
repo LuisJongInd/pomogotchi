@@ -50,13 +50,12 @@ static void Image_drawChar(uint8_t *c) {
 }
 void Image_clearStrings(void) {
 
-
     uint8_t amountOfChars = pos_x * pos_y;
     pos_y = 0;
     pos_x = 0;
 
     for (uint8_t i = 0; i < amountOfChars; i++) {
-        Image_drawChar((uint8_t*)'[');
+        Image_drawChar((uint8_t *)'[');
     }
 
     pos_x = 0;
