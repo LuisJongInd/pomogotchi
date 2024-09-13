@@ -19,7 +19,7 @@ typedef enum {DISABLE, ENABLE} EnableDisable;
 typedef enum {LOW, HIGH} PinLogicalLevel;
 typedef enum {FLAG_LOW, FLAG_HIGH} FlagStatus;
 
-void SystemTickInit(void);
+void System_Init(void);
 
 
 #include "gpio.h"
