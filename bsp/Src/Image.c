@@ -48,18 +48,23 @@ static void Image_drawChar(uint8_t *c) {
         pos_y %= display_width;
     }
 }
+
 void Image_clearStrings(void) {
 
-    uint8_t amountOfChars = pos_x * pos_y;
-    pos_y = 0;
-    pos_x = 0;
+    uint8_t display_width = (einkDisplay_Width / 8) + 1;
+    uint8_t chars_in_x = display_width / char_width - 1;
+    
+    uint8_t amountOfChars = (pos_y * chars_in_x ) + (pos_x) ;
 
+    pos_x = 0;
+    pos_y = 0;
+    uint8_t c = ':';
     for (uint8_t i = 0; i < amountOfChars; i++) {
-        Image_drawChar((uint8_t *)'[');
+        Image_drawChar(&c);
     }
-
     pos_x = 0;
     pos_y = 0;
+
 }
 
 void Image_drawTamagotchi(void) { ; }

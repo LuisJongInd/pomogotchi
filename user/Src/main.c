@@ -3,17 +3,14 @@
 
 void GPIO_initialization(void);
 
-char msg[] = "Hello world";
 /*
- * This test will send data over SPI in blocking mode
  */
 
 int main(void) {
     System_Init();
     eInkDisplay_Init();
 
-    Image_drawString((uint8_t *)" SHORT\0");
-    Image_drawString((uint8_t *)"  REST\0");
+    Image_drawString((uint8_t *)"FOCUSSSSS\0");
     Image_displayImage();
 
     delay(1000);
@@ -21,7 +18,7 @@ int main(void) {
 
     delay(1000);
     Image_clearStrings();
-    Image_drawString((uint8_t *)" LONG\0");
+    Image_drawString((uint8_t *)" SHORT\0");
     Image_drawString((uint8_t *)"  REST\0");
     Image_displayImage();
     eInkDisplay_FillWhite();
