@@ -5,14 +5,17 @@
 
 // eInkPaper widht = 122
 // eInkPaper height = 250 
-extern uint8_t Image[ ];
+extern uint8_t Image_array[ ];
 extern uint8_t alphaNumbers[];
+extern uint8_t character_bitmap[];
 
 extern uint8_t char_height;
 extern uint8_t char_width;
 
 void Image_displayImage(void);
 void Image_drawString(uint8_t *c);
+void Image_drawTamagotchi(void);
+void Image_clearStrings(void);
 
 
 #endif

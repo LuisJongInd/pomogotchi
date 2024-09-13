@@ -24,6 +24,6 @@ typedef struct {
 void eInkDisplay_Init(void);
 void eInkDisplay_FillWhite(void);
 void eInkDisplay_FillBlack(void);
-void eInkDisplay_DisplayImage(uint8_t *pImage);
+void eInkDisplay_DisplayImage(uint8_t *pImage, uint8_t *character_bitmap);
 
 #endif // !__EINKPAPER_H__
