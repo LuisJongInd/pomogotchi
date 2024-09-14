@@ -77,7 +77,7 @@ MAP_FILE = $(MAP_DIR)/project.map
 
 CC = arm-none-eabi-gcc
 MACH = cortex-m4
-INC = -I $(CMSIS_CORE)/Include \
+INC = -I $(CMSIS_CORE)/Include/ \
 			-I $(CMSIS_DEVICE)/Include \
 			-I $(BSP_DIR)/Inc \
 			-I $(USR_DIR)/Inc \

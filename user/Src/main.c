@@ -9,19 +9,7 @@ void GPIO_initialization(void);
 int main(void) {
     System_Init();
     eInkDisplay_Init();
-
-    Image_drawString((uint8_t *)"FOCUSSSSS\0");
-    Image_displayImage();
-
-    delay(1000);
-    eInkDisplay_FillWhite();
-
-    delay(1000);
-    Image_clearStrings();
-    Image_drawString((uint8_t *)" SHORT\0");
-    Image_drawString((uint8_t *)"  REST\0");
-    Image_displayImage();
-    eInkDisplay_FillWhite();
+    task_Focus();
 
     Test();
 
