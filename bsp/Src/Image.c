@@ -53,8 +53,8 @@ void Image_clearStrings(void) {
 
     uint8_t display_width = (einkDisplay_Width / 8) + 1;
     uint8_t chars_in_x = display_width / char_width - 1;
-    
-    uint8_t amountOfChars = (pos_y * chars_in_x ) + (pos_x) ;
+
+    uint8_t amountOfChars = (pos_y * chars_in_x) + (pos_x);
 
     pos_x = 0;
     pos_y = 0;
@@ -64,7 +64,6 @@ void Image_clearStrings(void) {
     }
     pos_x = 0;
     pos_y = 0;
-
 }
 
 void Image_drawTamagotchi(void) { ; }
