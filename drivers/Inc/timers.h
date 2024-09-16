@@ -11,5 +11,7 @@ void delay(uint32_t ms);
 void Timer_Init(void);
 void Timer_Start(void);
 void Scheduler(void);
+void Timer_Enable(void);
+void Timer_Disable(void);
 
 #endif 

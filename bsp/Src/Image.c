@@ -1,4 +1,5 @@
 #include "Image.h"
+#include <stdio.h>
 
 // Variables to keep track of the current character position, pos_x corresponds
 // to the x position in the x directoin of the display whereas pos_y corresponds
@@ -6,11 +7,12 @@
 // be updated.
 uint8_t pos_x = 0;
 uint8_t pos_y = 0;
+uint8_t *current_tamagotchi = focus_monkey;
 
 static void Image_drawChar(uint8_t *c);
 
 void Image_displayImage(void) {
-    eInkDisplay_DisplayImage(Image_array, character_bitmap);
+    eInkDisplay_DisplayImage(Image_array, current_tamagotchi);
 }
 
 static void Image_drawChar(uint8_t *c) {
@@ -74,4 +76,26 @@ void Image_drawString(uint8_t *c) {
     }
     pos_y++;
     pos_x = 0;
+}
+
+void Image_drawMinutesLeft(uint8_t minutesLeft) {
+    pos_y = 3;
+    char buf[7];
+    snprintf(buf, 7, "%d MIN\n", minutesLeft);
+    for (uint8_t i = 0; i < 7; i++) {
+        Image_drawChar((uint8_t *)&buf[i]);
+    }
+    pos_x = 0;
+}
+
+void Image_clearMinutesLeft(void) {
+
+    pos_x = 0;
+    pos_y = 3;
+    uint8_t c = ':';
+    for (uint8_t i = 0; i < 6; i++) {
+        Image_drawChar(&c);
+    }
+    pos_x = 0;
+    pos_y = 0;
 }
