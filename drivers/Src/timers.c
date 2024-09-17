@@ -43,11 +43,18 @@ void Timer_Start(void) {
     // Enable and configure interruption
     TIM6->DIER = (TIM_DIER_UIE);
 
-    NVIC_SetPriority(TIM6_DAC_IRQn, 16);
+    NVIC_SetPriority(TIM6_DAC_IRQn, 15);
     NVIC_EnableIRQ(TIM6_DAC_IRQn);
+}
 
-    // Enabling the Counter
+void Timer_Enable(void) {
+    // enabling the counter
     TIM6->CR1 = (TIM_CR1_CEN);
+}
+
+void Timer_Disable(void) {
+    // enabling the counter
+    TIM6->CR1 &= ~(TIM_CR1_CEN);
 }
 
 void TIM6_DAC_IRQHandler(void) {

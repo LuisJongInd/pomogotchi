@@ -80,6 +80,7 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
         RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
         SYSCFG->EXTICR[x] |= (n << (y * 4));
+        EXTI->PR |= (1 << pGPIODriver->Config.Number);
     }
 
     /* Output Type  */

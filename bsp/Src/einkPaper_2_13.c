@@ -23,6 +23,7 @@ void eInkDisplay_Init(void) {
 }
 
 void eInkDisplay_FillWhite(void) {
+    //
 
     eInkDisplay_SendCommand(0x24);
     for (uint8_t h = 0; h < einkDisplay_Height; h++) {

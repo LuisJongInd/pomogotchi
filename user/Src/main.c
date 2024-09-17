@@ -9,7 +9,7 @@ void GPIO_initialization(void);
 int main(void) {
     System_Init();
     eInkDisplay_Init();
-    task_Focus();
+    Start_Scheduler();
 
     Test();
 
