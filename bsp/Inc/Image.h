@@ -18,7 +18,7 @@ void Image_drawString(uint8_t *c);
 void Image_drawTamagotchi(void);
 void Image_clearStrings(void);
 void Image_clearMinutesLeft(void);
-void Image_drawMinutesLeft(uint8_t minutesLeft);
+void Image_drawMinutesLeft(uint16_t minutesLeft);
 
 
 #endif

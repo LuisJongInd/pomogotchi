@@ -78,12 +78,13 @@ void Image_drawString(uint8_t *c) {
     pos_x = 0;
 }
 
-void Image_drawMinutesLeft(uint8_t minutesLeft) {
+void Image_drawMinutesLeft(uint16_t minutesLeft) {
     pos_y = 3;
-    char buf[7];
-    snprintf(buf, 7, "%d MIN\n", minutesLeft);
-    for (uint8_t i = 0; i < 7; i++) {
-        Image_drawChar((uint8_t *)&buf[i]);
+    char buf[8];
+    snprintf(buf, 8, "%d MIN\n", minutesLeft);
+    uint8_t i = 0;
+    while (buf[i] != '\n') {
+        Image_drawChar((uint8_t *)&buf[i++]);
     }
     pos_x = 0;
 }

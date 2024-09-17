@@ -10,7 +10,6 @@ int main(void) {
     System_Init();
     eInkDisplay_Init();
     Start_Scheduler();
-    // eInkDisplay_FillWhite();
 
     Test();
 
