@@ -158,7 +158,7 @@ void eInkDisplay_SPI_Init(void) {
     spi1.Config.Type = SPI_Type_FullDuplex;
     spi1.Config.Mode = SPI_Mode_0;
     spi1.Config.Hierarchy = SPI_Hierarchy_Master;
-    spi1.Config.BaudRate = SPI_BaudRate_div16;
+    spi1.Config.BaudRate = SPI_BaudRate_div2;
     spi1.Config.FrameFormat = SPI_FrameFormat_MSBFirst;
     spi1.Config.SSM = SPI_SSM_Enable;
     spi1.Config.DataFormat = SPI_DataFormat_8bit;

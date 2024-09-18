@@ -79,7 +79,7 @@ void Image_drawString(uint8_t *c) {
 }
 
 void Image_drawMinutesLeft(uint16_t minutesLeft) {
-    pos_y = 3;
+    pos_y = 4;
     char buf[8];
     snprintf(buf, 8, "%d MIN\n", minutesLeft);
     uint8_t i = 0;
@@ -92,7 +92,7 @@ void Image_drawMinutesLeft(uint16_t minutesLeft) {
 void Image_clearMinutesLeft(void) {
 
     pos_x = 0;
-    pos_y = 3;
+    pos_y = 4;
     uint8_t c = ':';
     for (uint8_t i = 0; i < 6; i++) {
         Image_drawChar(&c);

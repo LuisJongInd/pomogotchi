@@ -1,23 +1,45 @@
 #include "tasks.h"
 
+/* Global variables */
+
+// Type structure variables
 Scheduler_TypeDef scheduler;
+GPIO_DriverTypeDef scheduler_button;
+
+// Time of each Pomogotchi technique state
+uint8_t focus_time = 25;
+uint8_t short_rest_time = 5;
+uint8_t long_rest_time = 15;
+uint8_t amount_of_cycles = 3;
+
+// Flag that indicates whether the device was On or Off (after button IRQ
+// triggering)
+volatile uint8_t poweredOff = 0;
+
+// Static functions
 static void switch_task(void);
 static void GPIO_buttonInit(void);
 static void task_Button(void);
 
-GPIO_DriverTypeDef scheduler_button;
-uint8_t focus_time = 25;
-uint8_t short_rest_time = 10;
-uint8_t long_rest_time = 15;
-volatile uint8_t poweredOff = 0;
-
+/*
+ * The scheduler is invoked every second by the Timer 6 interruption. It handles
+ * the following:
+ *    * Switching the task whenever the time of the current state is met.
+ *    * Whenever a minute elapses, display the current time left.
+ *    * Invoke the idle state when there is no display updating operations.
+ */
 void Scheduler(void) {
 
+    // Switch the task when the time of the current state has elapsed
     if (scheduler.minutes_to_elapse == global_seconds / 60) {
+        // handler that switches the next task based on a state machine
         switch_task();
     }
+    // Check if a minute has elapsed, not exclusive of the task switching in
+    // order to display the time left after swithing to the next state
     if (global_seconds % 60 == 0) {
-        uint16_t minutes_left = scheduler.minutes_to_elapse - (global_seconds / 60);
+        uint16_t minutes_left =
+            scheduler.minutes_to_elapse - (global_seconds / 60);
         task_MinuteElapsed(minutes_left);
     }
     if (scheduler.Availability == Available) {
@@ -25,6 +47,12 @@ void Scheduler(void) {
     }
 }
 
+/*
+ * Initialazes the built-in button that triggers a new task and switches On/Off
+ * the device. Enables the Timer to trigger the strigger the scheduler and
+ * invokes the first required tasks. Invoked from main function after hardware
+ * intitializations.
+ */
 void Start_Scheduler(void) {
     GPIO_buttonInit();
     Timer_Enable();
@@ -32,47 +60,92 @@ void Start_Scheduler(void) {
     task_MinuteElapsed(focus_time);
 }
 
+/*
+ * Handles the Focus state. Sets scheduler variables and the corresponding image
+ * of it. This state is always invoked after any kind of rest (long or short).
+ */
 void task_Focus(void) {
     current_tamagotchi = focus_monkey;
-    scheduler.State = State_Focus;
+
+    // Resetting global seconds variable to start over the count
     global_seconds = 0;
+
+    // Setting the current state and the time to elapse
+    scheduler.State = State_Focus;
     scheduler.minutes_to_elapse = focus_time;
+
+    // Updates the amount of cycles, used to know whenever a long rest is next
     scheduler.cycles++;
+
+    // Avoid to call the Idle task
     scheduler.Availability = NotAvailable;
+
+    // Display operations
     Image_clearStrings();
     Image_clearMinutesLeft();
     Image_drawString((uint8_t *)" FOCUS\0");
     Image_displayImage();
+
+    // Release the CPU
     scheduler.Availability = Available;
 }
 
+/*
+ * Handles the Short Rest state. Invoked after every focus state except when the
+ * amount of cycles is greater than amount_of_cycles.
+ */
 void task_ShortRest(void) {
-
     current_tamagotchi = beer_monkey;
-    scheduler.State = State_ShortRest;
+
+    // Resetting global seconds variable to start over the count
     global_seconds = 0;
+
+    // Setting the current state and the time to elapse
+    scheduler.State = State_ShortRest;
     scheduler.minutes_to_elapse = short_rest_time;
+
+    // Avoid to call the Idle task
     scheduler.Availability = NotAvailable;
+
+    // Display operations
     Image_clearStrings();
     Image_clearMinutesLeft();
     Image_drawString((uint8_t *)" SHORT\0");
     Image_drawString((uint8_t *)"  REST\0");
     Image_displayImage();
+
+    // Release the CPU
     scheduler.Availability = Available;
 }
 
+/*
+ * Handles the Long Rest state. Invoked after focus state was invoked at least
+ * amount_of_cycles times.
+ */
 void task_LongRest(void) {
     current_tamagotchi = sleeping_monkey;
-    scheduler.State = State_LongRest;
+
+    // Resetting global seconds variable to start over the count
     global_seconds = 0;
+
+    // Setting the current state and the time to elapse
+    scheduler.State = State_LongRest;
     scheduler.minutes_to_elapse = long_rest_time;
+
+    // Reset the cycles variable to run again short rests
     scheduler.cycles = 0;
+
+    // Avoid to call the Idle task
+    scheduler.Availability = NotAvailable;
+
+    // Display operations
     Image_clearStrings();
     Image_clearMinutesLeft();
-    scheduler.Availability = NotAvailable;
     Image_drawString((uint8_t *)" LONG\0");
     Image_drawString((uint8_t *)"  REST\0");
     Image_displayImage();
+
+    // Release the CPU
     scheduler.Availability = Available;
 }
 
@@ -82,33 +155,64 @@ void task_MinuteElapsed(uint16_t minutes_left) {
     Image_displayImage();
 }
 
-void task_Idle(void) { __WFE(); }
+/*
+ * Invokes the WFE (Wait For Event) instruction, which is a CPU instruction.
+ */
+void task_Idle(void) {
+    // Using macro defined in cmsis_gcc header file.
+    __WFE();
+}
 
+/*
+ * Handles the built-in button interruption. Checks wether the MCU was powered
+ * off or not.
+ */
 static void task_Button(void) {
     if (poweredOff) {
+        // Set the variable as not powered off (whenever is pressed again the
+        // button, it will turn off the device)
         poweredOff = 0;
+
+        // Re-initialazes all variables, start with focus state again
         current_tamagotchi = focus_monkey;
         scheduler.cycles = 0;
+
+        // Display operations
         Timer_Enable();
         task_Focus();
         task_MinuteElapsed(focus_time);
     } else {
+        // Set the variable as powered off (whenever the button is pressed
+        // again, the device will turn on and follow the re-initialization
+        // sequence)
         poweredOff = 1;
+
+        // Disable the timer to avoid triggering the scheduler
         Timer_Disable();
+
+        // emtpy the image
         current_tamagotchi = empty_tamagotchi;
+
+        // Display operations
         Image_clearStrings();
         Image_clearMinutesLeft();
         Image_drawString((uint8_t *)" BYE\0");
         Image_drawString((uint8_t *)" BYE\0");
         Image_displayImage();
         eInkDisplay_FillWhite();
+
+        // Put the CPU to sleep with Wait For Event instruction
         __WFE();
     }
 }
 
+/*
+ * Defines how the task will switch based on the current conditions
+ */
 static void switch_task(void) {
 
-    if ((scheduler.State == State_Focus) && (scheduler.cycles <= 2)) {
+    if ((scheduler.State == State_Focus) &&
+        (scheduler.cycles <= amount_of_cycles)) {
         task_ShortRest();
     } else if ((scheduler.State == State_Focus)) {
         task_LongRest();
@@ -117,9 +221,13 @@ static void switch_task(void) {
     }
 }
 
+/*
+ * Buil-in initialization as interruption mode. Set the trigger interruption on
+ * the falling edge
+ */
 static void GPIO_buttonInit(void) {
     scheduler_button.pGPIOx = GPIOC;
-    scheduler_button.InterruptMode = GPIO_It_Rise;
+    scheduler_button.InterruptMode = GPIO_It_Fall;
     scheduler_button.Config.Number = 13;
     scheduler_button.Config.Mode = GPIO_Mode_Input;
     scheduler_button.Config.PullUpDown = GPIO_PuPd_None;
@@ -129,6 +237,10 @@ static void GPIO_buttonInit(void) {
     GPIO_IRQ_PriorityConfig(EXTI15_10_IRQn, 25);
 }
 
+/*
+ * Calls the task button whenever the built-in function is triggered. Invoked by
+ * the GPIO API
+ */
 void GPIO_Callback_IRQTrigger(uint8_t PinNumber) {
     if (PinNumber == 13) {
         task_Button();
