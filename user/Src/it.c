@@ -1,12 +1,14 @@
 #include "it.h"
 
+/*
+ * Vector table entry that handles EXTI lines (10..15), used fot built-in button
+ */
+
 void EXTI15_10_IRQHandler(void) {
+    // Software debouncer, avoid multiple IRQ triggering
     for (volatile uint32_t i = 0; i < 500000; i++) {
         ;
     }
-    // Handling interruptions in Pin 13 (Built-in Button is PC13)
+    // GPIO API handler
     GPIO_IRQ_Handling(13);
 }
-
-extern SPI_DriverTypeDef spi1;
-void SPI1_IRQHandler(void) { SPI_IRQ_Handling(&spi1); }

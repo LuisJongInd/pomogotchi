@@ -3,7 +3,4 @@
 
 #include "main.h"
 
-
-
-
 #endif // !__IT_H__
