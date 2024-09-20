@@ -16,10 +16,13 @@ uint8_t amount_of_cycles = 3;
 // triggering)
 volatile uint8_t poweredOff = 0;
 
-// Static functions
+/* Static functions */
+
 static void switch_task(void);
 static void GPIO_buttonInit(void);
 static void task_Button(void);
+
+/* Function implementations */
 
 /*
  * The scheduler is invoked every second by the Timer 6 interruption. It handles
@@ -27,6 +30,11 @@ static void task_Button(void);
  *    * Switching the task whenever the time of the current state is met.
  *    * Whenever a minute elapses, display the current time left.
  *    * Invoke the idle state when there is no display updating operations.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void Scheduler(void) {
 
@@ -52,6 +60,11 @@ void Scheduler(void) {
  * the device. Enables the Timer to trigger the strigger the scheduler and
  * invokes the first required tasks. Invoked from main function after hardware
  * intitializations.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void Start_Scheduler(void) {
     GPIO_buttonInit();
@@ -63,6 +76,11 @@ void Start_Scheduler(void) {
 /*
  * Handles the Focus state. Sets scheduler variables and the corresponding image
  * of it. This state is always invoked after any kind of rest (long or short).
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void task_Focus(void) {
     current_tamagotchi = focus_monkey;
@@ -93,6 +111,11 @@ void task_Focus(void) {
 /*
  * Handles the Short Rest state. Invoked after every focus state except when the
  * amount of cycles is greater than amount_of_cycles.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void task_ShortRest(void) {
     current_tamagotchi = beer_monkey;
@@ -121,6 +144,11 @@ void task_ShortRest(void) {
 /*
  * Handles the Long Rest state. Invoked after focus state was invoked at least
  * amount_of_cycles times.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void task_LongRest(void) {
     current_tamagotchi = sleeping_monkey;
@@ -148,15 +176,29 @@ void task_LongRest(void) {
     // Release the CPU
     scheduler.Availability = Available;
 }
-
+/*
+ * Displays the minutes elapsed on the screen.
+ *
+ * Params:
+ *    * minutes_left: 16 bit-wide integer that indicates the amount of minutes
+ * left Returns:
+ *    * None
+ */
 void task_MinuteElapsed(uint16_t minutes_left) {
+    // Clear the previous minutes displayed
     Image_clearMinutesLeft();
+    // Draw on the image array the minutes left sent by the scheduler
     Image_drawMinutesLeft(minutes_left);
     Image_displayImage();
 }
 
 /*
  * Invokes the WFE (Wait For Event) instruction, which is a CPU instruction.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 void task_Idle(void) {
     // Using macro defined in cmsis_gcc header file.
@@ -166,6 +208,11 @@ void task_Idle(void) {
 /*
  * Handles the built-in button interruption. Checks wether the MCU was powered
  * off or not.
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 static void task_Button(void) {
     if (poweredOff) {
@@ -208,6 +255,11 @@ static void task_Button(void) {
 
 /*
  * Defines how the task will switch based on the current conditions
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 static void switch_task(void) {
 
@@ -224,22 +276,33 @@ static void switch_task(void) {
 /*
  * Buil-in initialization as interruption mode. Set the trigger interruption on
  * the falling edge
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 static void GPIO_buttonInit(void) {
+    // built-in button configuration
     scheduler_button.pGPIOx = GPIOC;
     scheduler_button.InterruptMode = GPIO_It_Fall;
     scheduler_button.Config.Number = 13;
     scheduler_button.Config.Mode = GPIO_Mode_Input;
     scheduler_button.Config.PullUpDown = GPIO_PuPd_None;
-
     GPIO_Init(&scheduler_button);
+
+    // Interruption confuguration
     GPIO_IRQ_Control(EXTI15_10_IRQn, ENABLE);
     GPIO_IRQ_PriorityConfig(EXTI15_10_IRQn, 25);
 }
 
 /*
  * Calls the task button whenever the built-in function is triggered. Invoked by
- * the GPIO API
+ * the GPIO API.
+ *
+ * Params:
+ *    * Pin number: Corresponds to the Pin number that triggered the
+ * interruption
  */
 void GPIO_Callback_IRQTrigger(uint8_t PinNumber) {
     if (PinNumber == 13) {

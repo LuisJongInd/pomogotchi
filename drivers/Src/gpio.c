@@ -1,11 +1,20 @@
 #include "gpio.h"
 
-// avoid multiple definitions
+/* Static functions */
 
-static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
+static void GPIO_PeripheralClockControl(GPIO_TypeDef *pGPIOx,
                                         EnableDisable EnorDi);
-static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx);
+static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *pGPIOx);
 
+/*
+ * GPIO initilaization function. Used to configure the Pin as desired
+ *
+ * Params:
+ *    * pGPIODriver, pointer to a GPIO_DriverTypeDef structure with the GPIO
+ * configurations Returns:
+ *    * DriverStatus, a flag that returns the succesfulness of the GPIO
+ * initilaization
+ */
 DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
     // Enable clock in order to configure registers
 
@@ -140,16 +149,40 @@ DriverStatus GPIO_Init(GPIO_DriverTypeDef *pGPIODriver) {
     return OK;
 }
 
+/*
+ * Reads the current state of the desired pin
+ *
+ * Params:
+ *    * pGPIOx, pointer to GPIO_TypeDef which is the desired GPIO port to
+ * configure
+ *    * PinNumber, 8 bit-wide integer which is the desired Pin of the GPIOx port
+ * to read
+ * Returns:
+ *    * logicalState, an 8 bit-wide integer with the logical value of the
+ * desired pin
+ */
 uint8_t GPIO_Pin_Read(GPIO_TypeDef *pGPIOx, uint8_t PinNumber) {
 
     /* Reading form single pin in Input Data Registers */
     // IDRy is a read only register which reads the input of the y(0..15) pin
     // of the GPIOx port.
 
-    uint8_t returnValue = ((pGPIOx->IDR >> PinNumber) & 0x1);
-    return returnValue;
+    uint8_t logicalState = ((pGPIOx->IDR >> PinNumber) & 0x1);
+    return logicalState;
 }
 
+/*
+ * Writes to a desired pin in the pGPIOx port
+ *
+ * Params:
+ *    * pGPIOx, pointer to GPIO_TypeDef which is the desired GPIO port to
+ * configure
+ *    * PinNumber, 8 bit-wide integer which is the desired Pin of the pGPIOx
+ * port to write
+ *    * LorH, a PinLogicalLevel variable which indicates the logical state to
+ * write in the desired pin Returns:
+ *    * None
+ */
 void GPIO_Pin_Write(GPIO_TypeDef *pGPIOx, uint8_t PinNumber,
                     PinLogicalLevel LorH) {
     /* Writing to single pin in Output Data Register */
@@ -161,11 +194,32 @@ void GPIO_Pin_Write(GPIO_TypeDef *pGPIOx, uint8_t PinNumber,
     }
 }
 
+/*
+ * Toggles the current value of the desired pin
+ *
+ * Params:
+ *    * pGPIOx, pointer to GPIO_TypeDef which is the desired GPIO port to
+ * configure
+ *    * PinNumber, 8 bit-wide integer which is the desired Pin of the pGPIOx
+ * port to toggle
+ * Returns:
+ *    * None
+ */
 void GPIO_Pin_Toggle(GPIO_TypeDef *pGPIOx, uint8_t PinNumber) {
     pGPIOx->ODR ^= (uint16_t)(0x1 << PinNumber);
 }
 
-void GPIO_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
+/*
+ * Enables/Disables the IRQ functionality of the EXTI line
+ *
+ * Params:
+ *    * IRQNumber, an integer defined in the CMSIS device file with the
+ * corresponding EXTI line IRQ number
+ *    * EnOrDi, an EnableDisable variable to decide whether the peripheral
+ * interruption will be enabled or disabled Returns:
+ *    * None
+ */
+void GPIO_IRQ_Control(IRQn_Type IRQNumber, EnableDisable EnOrDi) {
 
     /* Enabling/Disabling GPIO interruptions*/
 
@@ -182,18 +236,37 @@ void GPIO_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
     }
 }
 
-void GPIO_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
+/*
+ *  Configures the priority level of the peripheal
+ *
+ *  Params:
+ *      * IRQNumber, an IRQn_Type that corresponds to the IRQ to configure
+ * (defined in CMSIS layer)
+ *      * IRQPriority, an uint32_t with the new priority
+ *  Returns:
+ *      * None
+ */
+void GPIO_IRQ_PriorityConfig(IRQn_Type IRQNumber, uint32_t IRQPriority) {
 
     /* Configuring GPIO interruptions priority */
 
     // To configure the priority, the NVIC_IPRx registers are used. Those are
-    // 60 registers used to configure the prioritie values of each interruptions
+    // 60 registers used to configure the priority values of each interruptions
     // available
 
     // Using CMSIS defined function
     __NVIC_SetPriority(IRQNumber, IRQPriority);
 }
 
+/*
+ * Handles the GPIO interruption. Invoked by the EXTI handler
+ *
+ * Params:
+ *    * PinNumber: PinNumber, an 8 bit-wide integer that corresponds to the
+ * PinNumber that arosed the interruption
+ * Returns:
+ *    * None
+ */
 void GPIO_IRQ_Handling(uint8_t PinNumber) {
     /* Handling GPIO IRQ interruptions */
 
@@ -208,15 +281,35 @@ void GPIO_IRQ_Handling(uint8_t PinNumber) {
     }
 }
 
-static void GPIO_PeripheralClockControl(GPIO_TypeDef *GPIOx,
+/*
+ * Enables pGPIOx port clock
+ *
+ * Params:
+ *    * pGPIOx, a pointer to a GPIO_TypeDef which corresponds to the desired
+ * GPIOx to enable its clock
+ *    * EnorDi, a EnableDisable variable to enable/disable the clock
+ * Returns:
+ *    * None
+ */
+static void GPIO_PeripheralClockControl(GPIO_TypeDef *pGPIOx,
                                         EnableDisable EnorDi) {
-
-    RCC->AHB1ENR |= (1 << GPIO_get_GPIOx_number(GPIOx));
+    // RCC peripheral enables/disables the clock. GPIOx ports are in AHB1 bus
+    RCC->AHB1ENR |= (1 << GPIO_get_GPIOx_number(pGPIOx));
 }
 
-static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx) {
+/*
+ * Returns the number of the GPIOx, used in bit shift operations where the
+ * x(A..K) corresponds to a position
+ *
+ * Params:
+ *    * pGPIOx, GPIO_TypeDef that corresponds to the GPIOx
+ * Returns:
+ *    * number, an 8 bit-wide integer with the corresponding number to the x
+ * GPIO port
+ */
+static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *pGPIOx) {
     uint8_t number = 0;
-    switch ((unsigned long int)GPIOx) {
+    switch ((unsigned long int)pGPIOx) {
     case GPIOA_BASE:
         number = 0;
         break;
@@ -254,6 +347,12 @@ static uint8_t GPIO_get_GPIOx_number(GPIO_TypeDef *GPIOx) {
     return number;
 }
 
+/*
+ * Weak callback implementation of the GPIO interruption trigger
+ *
+ * Params:
+ *    * PinNumber, 8 bit-wide integer that triggered the intertuption
+ */
 __weak void GPIO_Callback_IRQTrigger(uint8_t PinNumber) {
     // should be implemented in user level code
     // cast to void to avoid unused variable

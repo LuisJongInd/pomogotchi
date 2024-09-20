@@ -2,6 +2,11 @@
 
 /*
  * Vector table entry that handles EXTI lines (10..15), used fot built-in button
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
  */
 
 void EXTI15_10_IRQHandler(void) {

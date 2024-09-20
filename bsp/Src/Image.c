@@ -68,8 +68,6 @@ void Image_clearStrings(void) {
     pos_y = 0;
 }
 
-void Image_drawTamagotchi(void) { ; }
-
 void Image_drawString(uint8_t *c) {
     while (*c != '\0') {
         Image_drawChar(c++);
