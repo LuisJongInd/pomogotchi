@@ -1,11 +1,22 @@
 #include "spi.h"
 
+/* Static functions */
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
                                        EnableDisable EnorDi);
 static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag);
 static void SPI_IRQHandleTXe(SPI_DriverTypeDef *pSPIDriver);
 static void SPI_CloseTransmission(SPI_DriverTypeDef *pSPIDriver);
 
+/*
+ * SPI initilaization function. Used to configure the SPI port
+ *
+ * Params:
+ *    * pSPIDriver, pointer to a SPI_DriverTypeDef structure with the SPI
+ * configurations
+ * Returns:
+ *    * DriverStatus, a flag that returns the succesfulness of the SPI
+ * initilaization
+ */
 DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     // Enable clocks in ordr to configure the SPI
     SPI_PeripheralClockControl(pSPIDriver->pSPIx, ENABLE);
@@ -19,7 +30,6 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     if (pSPIDriver->Config.Type == SPI_Type_FullDuplex) {
         // BIDIMODE[0] = 0
         pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_BIDIMODE);
-
     } else if (pSPIDriver->Config.Type == SPI_Type_HalfDuplex) {
         // BIDIMODE[0] = 1
         pSPIDriver->pSPIx->CR1 |= (SPI_CR1_BIDIMODE);
@@ -111,6 +121,17 @@ DriverStatus SPI_Init(SPI_DriverTypeDef *pSPIDriver) {
     return OK;
 }
 
+/*
+ * Sending data via SPIx in blocking mode
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to SPI_DriverTypeDef that contains the SPIx that
+ * will send data and its configuration
+ *    * pTxBuffer, a pointer to a 8 bit-wide integer that holds the data to send
+ *    * Len, a 32 bit-wide integer with the Len of the data to send
+ * Returns:
+ *    * None
+ */
 void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
                   uint32_t Len) {
     /* Send Data over SPIx, blocking mode */
@@ -153,6 +174,17 @@ void SPI_SendData(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
     pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SPE);
 }
 
+/*
+ * Sending data via SPIx in interruption mode (non blocking mode)
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to SPI_DriverTypeDef that contains the SPIx that
+ * will send data and its configuration
+ *    * pTxBuffer, a pointer to a 8 bit-wide integer that holds the data to send
+ *    * Len, a 32 bit-wide integer with the Len of the data to send
+ * Returns:
+ *    * None
+ */
 DriverStatus SPI_SendDataIT(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
                             uint32_t Len) {
     /* Send Data over SPIx, IT mode */
@@ -180,6 +212,16 @@ DriverStatus SPI_SendDataIT(SPI_DriverTypeDef *pSPIDriver, uint8_t *pTxBuffer,
     return OK;
 }
 
+/*
+ * Handles the SPI interruption, invokes a handler function that correspond to
+ * the type of interruption
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to the SPI_DriverTypeDef which contains the SPI
+ * information Returns:
+ *    * None
+ *
+ */
 void SPI_IRQ_Handling(SPI_DriverTypeDef *pSPIDriver) {
     /* Handling any SPI interruption arised */
 
@@ -187,12 +229,21 @@ void SPI_IRQ_Handling(SPI_DriverTypeDef *pSPIDriver) {
     // if Tx Empty is enabled in CR2 and if TX Empty flag is set in SR
     if ((pSPIDriver->pSPIx->CR2 >> SPI_CR2_TXEIE_Pos) &&
         (pSPIDriver->pSPIx->SR >> SPI_SR_TXE_Pos)) {
-        // TX buffer ready to sent new data
+        // TX buffer ready to sent new data, invoke the callback
         SPI_IRQHandleTXe(pSPIDriver);
     }
 }
 
-void SPI_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
+/*
+ * Enables/Disables the interruption on the NVIC table
+ *
+ * Params:
+ *    * IRQNumber, a IRQn_Type variable that corresponds to the SPI interruption
+ * number
+ *    * EnorDi, a EnableDisable variable that defines if the interruption will
+ * be enabled or disabled
+ */
+void SPI_IRQ_Control(IRQn_Type IRQNumber, EnableDisable EnOrDi) {
     /* Enabling/Disabling SPI interruptions*/
 
     // To enable interruptions we use NVIC_ISERx register. This
@@ -208,18 +259,36 @@ void SPI_IRQ_Control(uint8_t IRQNumber, EnableDisable EnOrDi) {
     }
 }
 
-void SPI_IRQ_PriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority) {
+/*
+ * Sets the interruption level of the SPI
+ *
+ * Params:
+ *    * IRQNumber, an IRQn_Type variable with the corresponding interruption
+ * number on the vector table
+ *    * IRQPriority, a 32 bit-wide integer with the new level of priority
+ */
+void SPI_IRQ_PriorityConfig(IRQn_Type IRQNumber, uint32_t IRQPriority) {
 
     /* Configuring SPI interruptions priority */
 
     // To configure the priority, the NVIC_IPRx registers are used. Those
-    // are 60 registers used to configure the prioritie values of each
+    // are 60 registers used to configure the priority values of each
     // interruptions available
 
     // Using CMSIS defined function
     __NVIC_SetPriority(IRQNumber, IRQPriority);
 }
 
+/*
+ * Enables/disables the clock of the SPIx
+ *
+ * Params:
+ *    * pSPIx, a pointer to a SPI_TypeDef with the SPIx to be enabled
+ *    * EnorDi, a EnableDisable variable that defines whether the peripheral
+ * will be enabled or disabled
+ * Returns:
+ *    * None
+ */
 static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
                                        EnableDisable EnorDi) {
 
@@ -257,13 +326,32 @@ static void SPI_PeripheralClockControl(SPI_TypeDef *pSPIx,
     }
 }
 
+/*
+ * Returns the status of a desired flag of the SPIx
+ *
+ * Params:
+ *    * pSPIx, a pointer to the SPI_TypeDef which corresponds to the SPIx
+ *    * flag, a 32 bit-wide pointer that corresponds with the position of the
+ * flag Returns:
+ *    * FlagStatus, the status of the desired flag on the SPIx
+ */
 static FlagStatus SPI_GetFlag(SPI_TypeDef *pSPIx, uint32_t flag) {
+    // The SPI_SR contains the arised flags of the SPIx peripheral
     if (pSPIx->SR & flag) {
         return FLAG_HIGH;
     }
     return FLAG_LOW;
 }
 
+/*
+ * Sends a new byte every time the Tx buffer is ready to send a new byte
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to a SPI_DriverTypeDef which contains the SPIx
+ * that will send data
+ * Returns:
+ *    * None
+ */
 static void SPI_IRQHandleTXe(SPI_DriverTypeDef *pSPIDriver) {
     /* Send data withouth blocking */
 
@@ -291,6 +379,15 @@ static void SPI_IRQHandleTXe(SPI_DriverTypeDef *pSPIDriver) {
     }
 }
 
+/*
+ * Ends the transmission on the SPIx driver when there is no more data to send
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to a SPI_DriverTypeDef which contains the SPIx
+ * that will close the transmission
+ * Returns:
+ *    * None
+ */
 static void SPI_CloseTransmission(SPI_DriverTypeDef *pSPIDriver) {
     // Disabling the interruption
 
@@ -307,6 +404,16 @@ static void SPI_CloseTransmission(SPI_DriverTypeDef *pSPIDriver) {
     pSPIDriver->pSPIx->CR1 &= ~(SPI_CR1_SPE);
 }
 
+/*
+ * Indicates that the SPIx has completed the data transmission, weak
+ * implementation
+ *
+ * Params:
+ *    * pSPIDriver, a pointer to a SPI_DriverTypeDef which contains the SPIx
+ * that ended the transmission
+ * Returns:
+ *    * None
+ */
 __weak void SPI_CallbackTxCompleted(SPI_DriverTypeDef *pSPIDriver) {
     // nullify the unused variable
     (void)pSPIDriver;
