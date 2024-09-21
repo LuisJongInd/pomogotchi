@@ -96,7 +96,8 @@ void Timer_Init(void) {
 }
 
 /*
- *  Sets the interruption configuration of the timer 6 and enables the interruption
+ *  Sets the interruption configuration of the timer 6 and enables the
+ * interruption
  *
  *  Params:
  *      * None
@@ -124,7 +125,6 @@ void Timer_Enable(void) {
     TIM6->CR1 = (TIM_CR1_CEN);
 }
 
-
 /*
  * Disables the timer interruption
  *
@@ -138,7 +138,6 @@ void Timer_Disable(void) {
     TIM6->CR1 &= ~(TIM_CR1_CEN);
 }
 
-
 /*
  * Handles the Timer 6 interruption. Entry of the NVIC vector table
  *
@@ -148,10 +147,10 @@ void Timer_Disable(void) {
  *    * None
  */
 void TIM6_DAC_IRQHandler(void) {
-    
+
     // Check if the interruption is enabled
     if (TIM6->DIER & TIM_DIER_UIE) {
-        // Check the Update Interrupt Flag 
+        // Check the Update Interrupt Flag
         if (TIM6->SR & TIM_SR_UIF) {
             // Clear the flag
             TIM6->SR &= ~(TIM_SR_UIF);

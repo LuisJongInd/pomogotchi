@@ -1,12 +1,14 @@
 #include "einkPaper_2_13.h"
 
+/* Global variables */
 EinkPaper_TypeDef epaper_2_13;
 SPI_DriverTypeDef spi1;
 
-// display has a 122 x 250 resolution
+// Display dimensions
 uint8_t einkDisplay_Width = 122;
 uint8_t einkDisplay_Height = 250;
 
+/* Static functions */
 static void eInkDisplay_GPIO_Init(void);
 static void eInkDisplay_SPI_Init(void);
 static void eInkDisplay_Sequence_Init(void);
@@ -15,53 +17,132 @@ static void eInkDisplay_SendData(uint8_t data);
 static void eInkDisplay_SendCommand(uint8_t command);
 static void eInkDisplay_UpdateDisplay(void);
 
+/*
+ * Initialazes the Display
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_Init(void) {
-    // Peripherla and Pin initialization
+
+    // GPIO initialization (SPI low level configuration and GPIO pins)
     eInkDisplay_GPIO_Init();
+
+    // Configure the SPI 1 peripheral as communication interface
     eInkDisplay_SPI_Init();
+
+    // Follows the initialization sequence of the display
     eInkDisplay_Sequence_Init();
 }
 
+/*
+ * Clears the display with white pixels by sending (0 is black and 1 is white)
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_FillWhite(void) {
-    //
 
+    // Command: Write to RAM (0x24)
     eInkDisplay_SendCommand(0x24);
+
+    // Loop trough the height and widt of the display. Since a data transaction
+    // sends one byte, the width is divided by 8
     for (uint8_t h = 0; h < einkDisplay_Height; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
             eInkDisplay_SendData(0xFF);
         }
     }
+    // Update the display after writing in RAM
     eInkDisplay_UpdateDisplay();
 }
 
+/*
+ * Clears the display with black pixels by sending (0 is black and 1 is white)
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_FillBlack(void) {
+
+    // Command: Write to RAM (0x24)
     eInkDisplay_SendCommand(0x24);
+
+    // Loop trough the height and widt of the display. Since a data transaction
+    // sends one byte, the width is divided by 8
     for (uint8_t h = 0; h < einkDisplay_Height; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
-            eInkDisplay_SendData(0x00); // 00
+            eInkDisplay_SendData(0x00);
         }
     }
+
+    // Update the display after writing in RAM
     eInkDisplay_UpdateDisplay();
 }
 
+/*
+ * Displays the image in the e-ink paper display
+ *
+ * Params:
+ *    * pImage, a pointer to a 8 bit-wide integer that corresponeds to the top
+ * half of the display, this contains the strings
+ *    * character_bitmap, a pointer to a 8 bit-wide integer which points to the
+ * current image that will be displayed in the display, this is asigned to the
+ * bottom half of the display
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_DisplayImage(uint8_t *pImage, uint8_t *character_bitmap) {
 
+    // This corresponds to the top half of the display
+    // Command: Write to RAM (0x24)
     eInkDisplay_SendCommand(0x24);
     for (uint8_t h = 0; h < (einkDisplay_Height) / 2; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
+            // Send the corresponding byte of the pImage array, this is a 1-D
+            // array, to get the desired byte: w is the width byte, every time w
+            // increases, the char will follow to the following byte. h is the
+            // line, every time h increases, it adds an offset of the amount of
+            // bytes that fit in the x direction
             eInkDisplay_SendData(pImage[w + h * (einkDisplay_Width / 8 + 1)]);
         }
     }
+
+    // This corresponds to the bottom half of the display
+    // Command: Write to RAM (0x24)
     for (uint8_t h = 0; h < (einkDisplay_Height) / 2; h++) {
         for (uint8_t w = 0; w < einkDisplay_Width / 8 + 1; w++) {
+            // Send the corresponding byte of the pImage array, this is a 1-D
+            // array, to get the desired byte: w is the width byte, every time w
+            // increases, the char will follow to the following byte. h is the
+            // line, every time h increases, it adds an offset of the amount of
+            // bytes that fit in the x direction
             eInkDisplay_SendData(
                 character_bitmap[w + h * (einkDisplay_Width / 8 + 1)]);
         }
     }
+
+    // Update the display after writing in RAM
     eInkDisplay_UpdateDisplay();
 }
 
+
+/*
+ * Initialazes the GPIO pins (SPI low level initializaion and GPIO pins of the e-ink paper display)
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_GPIO_Init(void) {
+
     /* Gpio pin initialization */
 
     // Configuring SPI peripheral
@@ -145,9 +226,15 @@ void eInkDisplay_GPIO_Init(void) {
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
 }
 
-// TODO: Consider making an file that contain all handler in the bsp level
-void EXTI9_5_IRQHandler(void) { GPIO_IRQ_Handling(epaper_2_13.Busy_PinNumber); }
 
+/*
+ * Initialazes SPI1 as communication interface
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 void eInkDisplay_SPI_Init(void) {
     /* SPI Pin Initialization */
 
@@ -166,25 +253,42 @@ void eInkDisplay_SPI_Init(void) {
     SPI_Init(&spi1);
 }
 
+/*
+ * Resets the e-ink display using Reset Pin
+ * 
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 static void eInkDisplay_HW_Reset(void) {
     // To make a HW reset, Reset pin must go low
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, HIGH);
-    delay(20);
+    delay(2);
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, LOW);
     delay(2);
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.Reset_PinNumber, HIGH);
-    delay(20);
+    delay(2);
 }
 
+/*
+ * Follows the initialization procedure of the e-ink paper display
+ * 
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 static void eInkDisplay_Sequence_Init(void) {
     /* Display initialization */
 
     // Wait for 10 ms after energy supply
     delay(10);
-    // HW reset
 
+    // HW reset
     eInkDisplay_HW_Reset();
 
+    // Halt until e-ink display is not busy
     while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
         ;
     }
@@ -192,6 +296,7 @@ static void eInkDisplay_Sequence_Init(void) {
     // Command: SW Reset (0x12)
     eInkDisplay_SendCommand(0x12);
 
+    // Halt until e-ink display is not busy
     while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
         ;
     }
@@ -289,6 +394,14 @@ static void eInkDisplay_Sequence_Init(void) {
     }
 }
 
+/*
+ * Sends a byte in data mode
+ *
+ * Params:
+ *    * data, a 8 bit-wide integer that will be sent in data mode 
+ * Returns:
+ *    * None
+ */
 static void eInkDisplay_SendData(uint8_t data) {
     // Send Data, D/C should be HIGH
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.DC_PinNumber, HIGH);
@@ -297,6 +410,14 @@ static void eInkDisplay_SendData(uint8_t data) {
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
 }
 
+/*
+ * Sends a byte in command mode
+ *
+ * Params:
+ *    * data, a 8 bit-wide integer that will be sent in command mode 
+ * Returns:
+ *    * None
+ */
 static void eInkDisplay_SendCommand(uint8_t command) {
     // Send Command, D/C should be LOW
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.DC_PinNumber, LOW);
@@ -305,13 +426,23 @@ static void eInkDisplay_SendCommand(uint8_t command) {
     GPIO_Pin_Write(epaper_2_13.pGPIOx, epaper_2_13.CS_PinNumber, HIGH);
 }
 
+/*
+ * Updates the image on the display after the RAM content is modified
+ *
+ * Params:
+ *    * None
+ * Returns:
+ *    * None
+ */
 static void eInkDisplay_UpdateDisplay(void) {
+
     // Command: Display update control (0x22)
     eInkDisplay_SendCommand(0x22);
     eInkDisplay_SendData(0xF7);
 
     eInkDisplay_SendCommand(0x20); // update display control
-
+    
+    // Wait until busy
     while (GPIO_Pin_Read(epaper_2_13.pGPIOx, epaper_2_13.Busy_PinNumber)) {
         ;
     }
