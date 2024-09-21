@@ -1,6 +1,5 @@
 #include "stm32f429zi.h"
 
-
 /*
  * Initialazes the Timer 6 and SysTick interruption
  *

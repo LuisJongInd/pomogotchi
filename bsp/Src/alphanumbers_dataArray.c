@@ -1,7 +1,13 @@
 #include <stdint.h>
 
+/* Exported variables */
+
+// Represents the dimensions of the chars, in bytes
 uint8_t char_height = 24;
 uint8_t char_width = 2;
+
+
+// Exported array, contains the array representation of each character
 
 uint8_t alphaNumbers[] = {
     // 0 : ascii 0x30, 0
