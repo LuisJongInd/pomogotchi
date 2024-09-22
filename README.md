@@ -31,7 +31,6 @@ To design Pomogotchi, only CMSIS libraries were used (no HAL layer nor e-ink pap
 5. [Makefile phony targets](#makefile-phony-targets)
 6. [How Pomogotchi is designed](#how-pomogotchi-is-designed)
 
-
 # Set up and Requirements
 
 ### Software Requirements:
@@ -141,4 +140,8 @@ Every second, a timer triggers an interruption which calls an scheduler. The sch
 
 To turn on/off the device, the built-in button is used. This sets the CPU in sleep mode and waits until the next button press, which will re-initialaze the Pomogotchi and start a new session.
 
+
+# CI system
+
+In order to avoid merging unsuccessful code, a small CI system is used. This system is made using GitHub actions using a configuration file (contained in hidden directory .github/workflows) that verifies code compilation successfulness.
 
