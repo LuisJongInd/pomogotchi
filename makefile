@@ -9,9 +9,6 @@
 # root directory of all files
 ROOT_DIR = ${ENV_HOME_DIR}
 
-# project directory (GitHub repository)
-PROJECT_DIR = pomogotchi/code
-
 # build dir
 BUILD_DIR = build
 
@@ -199,7 +196,6 @@ gdb_log:
 	@> $(GDB_LOG) && $(GDB) $(GDB_SCRIPT)
 
 # static analysis command
-
 static_analysis:
 	@$(SA) $(SA_FLAGS)
 
