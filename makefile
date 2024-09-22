@@ -109,7 +109,7 @@ OPEN_OCD_FLAGS = -f $(UTIL_DIR)/openocd.cfg
 #######################################################################################################################################################
 
 GDB = gdb-multiarch
-GDB_SCRIPT = --command=$(UTIL_DIR)/debug-gdb.py $(TARGET)
+GDB_SCRIPT = --command=$(UTIL_DIR)/gdb_script.gdb $(TARGET)
 GDB_DEBUG = -ex "target remote localhost:3333" -ex "lay src" -ex "b main" -ex "continue" $(TARGET)
 
 
