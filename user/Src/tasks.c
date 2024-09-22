@@ -10,7 +10,7 @@ GPIO_DriverTypeDef scheduler_button;
 uint8_t focus_time = 25;
 uint8_t short_rest_time = 5;
 uint8_t long_rest_time = 15;
-uint8_t amount_of_cycles = 1;
+uint8_t amount_of_cycles = 3;
 
 // Flag that indicates whether the device was On or Off (after button IRQ
 // triggering)
