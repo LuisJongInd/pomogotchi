@@ -1,4 +1,4 @@
-# Pomogotchi
+# Pomogotchi (Work in progress)
 
 Pomogotchi is a small STM32-based device aimed to be a company while completing daily tasks. Inspired by the [Pomodoro technique](https://en.wikipedia.org/wiki/Pomodoro_Technique), Pomogotchi is a simple implementation of the Pomodoro alarm without the need of setting alarms in distracting devices like a smartphone.
 
