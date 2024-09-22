@@ -26,9 +26,10 @@ To design Pomogotchi, only CMSIS libraries were used (no HAL layer nor e-ink pap
     - [Hardware Requirements](#hardware-requirements)
     - [Set up Steps](#set-up-steps)
 2. [Project file structure](#project-file-structure)
-3. [Software structure](#software-structure)
-4. [Makefile phony targets](#makeifle-phony-targets)
-
+3. [Software architecture](#software-architecture)
+4. [About the tasks](#about-the-tasks)
+5. [Makefile phony targets](#makefile-phony-targets)
+6. [How Pomogotchi is designed](#how-pomogotchi-is-designed)
 
 # Set up and Requirements
 
@@ -77,7 +78,22 @@ These steps can be followed but there are not mandatory. Instead, you can define
 
 # Software architecture
 
+This project is build from scratch, just the CMSIS header files are employed for registers type definitions, bits masks and some basic macro functions used in the the drivers API, which is an abstraction layer that performs some basic operations: 
+
+- Peripheral initialization
+- Data exchanging functionality
+- Timers and interruption triggering
+
+This API abstracts the Hardware and allows higher layers to interact with low level registers, making simpler to change any peripheral configurations. The bsp layer is another abstraction layer which adds all of the functionality related with external Hardware (e-ink display) available to the Application layer, which is where the scheduler invokes the defined tasks.
+
 ![Alt text](media/softwareStructure.png)
+
+
+# About the tasks
+
+In order to make the States (focus, short rest and long rest) easy to track, modify and switch, a task is asigned to each. This tasks define what is displayed on the e-ink display and the amount of time that needs to elapse in order to switch to the next task. 
+
+An additional tasks that is not invoked by the scheduler is the button task. This tasks is called only when the built-in button is pressed (configured in interruption mode), stopping the current running task and turnning off the device. This same task waits until the button is pressed again to re-initialaze Pomogotchi.
 
 
 # Makefile phony targets
@@ -117,8 +133,15 @@ Cleans the project, removes all the previously created objects.
 
 # How Pomogotchi is designed
 
+
 Every second, a timer triggers an interruption which calls an scheduler. The scheduler is function which manages the next state (pomodoro period) to execute. It defines whether a time period has elapsed or if the screen counter has to be updated. While there is no display update operation, the scheduler invokes the idle task, which reduces the amount of current consumed:
 
 ![Current consumption](media/currentConsumption.gif)
 
-To turn on/off the device, the built-in button is used. This sets the CPU in sleep mode and waits until the next button press, which will re-initialaze the Pomogotchi and run a new session.
+To turn on/off the device, the built-in button is used. This sets the CPU in sleep mode and waits until the next button press, which will re-initialaze the Pomogotchi and start a new session.
+
+
+# CI system
+
+In order to avoid merging unsuccessful code, a small CI system is used. This system is made using GitHub actions using a configuration file (contained in hidden directory .github/workflows) that verifies code compilation successfulness.
+
