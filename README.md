@@ -1,11 +1,18 @@
 # Pomogotchi
 
-Pomogotchi is a small STM32-based device aimed to be a company while completing daily tasks. Inspired by the [Pomodoro technique](https://en.wikipedia.org/wiki/Pomodoro_Technique), Pomogotchi is a simple implementation of the Pomodoro alarm without the need of setting alarms in distracting devices like a smartphone.
+Pomogotchi is a small STM32-based device aimed to be a company while completing daily tasks. Inspired by the [Pomodoro technique](https://en.wikipedia.org/wiki/Pomodoro_Technique), a simple but useful technique to improve productivity by setting focus and rest periods.
+Pomogotchi is a simple implementation of the Pomodoro technique without the need of setting alarms in distracting devices like a smartphone.
+
+When executing, Pomogotchi has three states: 
+- Focus State: 25 minutes period of focused work
+- Short Rest State: 5 minutes period of resting
+- Long Rest State: 15 minutes period of resting after 4 focus periods
 
 Pomogotchi is designed wih a [bare-metal](https://en.wikipedia.org/wiki/Bare_machine) approach, implementing just what is needed. A [2.13inch e-paper display](https://www.waveshare.com/product/displays/e-paper/2.13inch-e-paper-hat-plus.htm) is used as the display interface since it can retain an image without any energy supplied. These traits make Pomogotchi a simple device with low current consumption.
 
 
 ![Alt text](media/pomogotchiDisplay.jpeg)
+
 
 # Disclaimer!
 
@@ -20,6 +27,7 @@ To design Pomogotchi, only CMSIS libraries were used (no HAL layer nor e-ink pap
     - [Set up Steps](#set-up-steps)
 2. [Project file structure](#project-file-structure)
 3. [Software structure](#software-structure)
+4. [Makefile phony targets](#makeifle-phony-targets)
 
 
 # Set up and Requirements
@@ -72,7 +80,7 @@ These steps can be followed but there are not mandatory. Instead, you can define
 ![Alt text](media/softwareStructure.png)
 
 
-# Makefile phonny targets
+# Makefile phony targets
 
 ### all
 
@@ -80,7 +88,7 @@ This project is build using the GNU Makefile tool, to build everything just type
 ```
 make all
 ```
-Or just ```make```. This creates the build/obj directory which contains all the objects of the project. This folder creates one directory for every layer (bsp, drivers, usr, util), each object file is placed in the corresponding directory. Alongside, an executable file named "executable.elf" is placed in a newly created directory called build/bin. This phonny target can be ommited since other rules build entirely the project too. This phonny target is used when no further action is required.
+Or just ```make```. This creates the build/obj directory which contains all the objects of the project. This folder creates one directory for every layer (bsp, drivers, usr, util), each object file is placed in the corresponding directory. Alongside, an executable file named "executable.elf" is placed in a newly created directory called build/bin. This phony target can be ommited since other rules build entirely the project too. This phony target is used when no further action is required.
 
 ### load
 
@@ -88,21 +96,29 @@ Builds the project and then loads the executable file into the board using OpenO
 
 ### debug
 
-Builds the project and then opens a OpenOCD session loading the executable file and halting the CPU waiting for another terminal to open a gdb-multiarch sesion to start debugging (this can be done manually, or with another provided makeifle phonny target).
+Builds the project and then opens a OpenOCD session loading the executable file and halting the CPU waiting for another terminal to open a gdb-multiarch sesion to start debugging (this can be done manually, or with another provided makeifle phony target).
 
 ### gdb_debug
 
 Opens a gdb-multiarch session and halts the CPU in the main function, useful for manually debugging the project.
 
+![Manually debugging with gdb_debug](media/debug.gif)
 
 ### gdb_log
 
 Opens a gdb-multiarch session and executes a gdb script, which prints to a log file placed in build/debug directory. The gdb script is in the util directory.
+
+![Creating log file with gdb_log rule](media/debugLog.gif)
 
 ### clean
 
 Cleans the project, removes all the previously created objects.
 
 
+# How Pomogotchi is designed
 
+Every second, a timer triggers an interruption which calls an scheduler. The scheduler is function which manages the next state (pomodoro period) to execute. It defines whether a time period has elapsed or if the screen counter has to be updated. While there is no display update operation, the scheduler invokes the idle task, which reduces the amount of current consumed:
 
+![Current consumption](media/currentConsumption.gif)
+
+To turn on/off the device, the built-in button is used. This sets the CPU in sleep mode and waits until the next button press, which will re-initialaze the Pomogotchi and run a new session.
