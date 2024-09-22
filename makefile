@@ -128,7 +128,7 @@ SA_INC = -I $(BSP_DIR)/Inc \
 				 -I $(DRIVERS_DIR)/Inc 
 
 #enabling all errors but missing include files
-SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=missingInclude:*.h  $(SA_INC) $(SA_SOURCES)
+SA_FLAGS = --quiet --enable=all --error-exitcode=1 --check-config  --suppress=missingIncludeSystem --suppress=missingInclude:*.h  $(SA_INC) $(SA_SOURCES)
 
 #######################################################################################################################################################
 #                                                                                                                                                     #
