@@ -143,5 +143,8 @@ To turn on/off the device, the built-in button is used. This sets the CPU in sle
 
 # CI system
 
-In order to avoid merging unsuccessful code, a small CI system is used. This system is made using GitHub actions using a configuration file (contained in hidden directory .github/workflows) that verifies code compilation successfulness.
+In order to avoid merging unsuccessful code, a small CI system is used. This system is made using GitHub actions using a configuration file (contained in hidden directory .github/workflows) that verifies code compilation successfulness. In order to merge code in the master branch, the following is perfomed:
+
+- Runs make all and verifies that compilation is successfully done.
+- make static analysis on the code using cppcheck
 
